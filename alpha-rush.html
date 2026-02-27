@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alpha Rush - ALPHA Finance Intelligence Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #020b12;
+    --surface: #061520;
+    --border: rgba(0, 220, 130, 0.15);
+    --green: #00dc82;
+    --green-dim: rgba(0, 220, 130, 0.08);
+    --amber: #f5a623;
+    --red: #ff4a6e;
+    --text: #e8f4f0;
+    --muted: rgba(232, 244, 240, 0.45);
+    --mono: 'DM Mono', monospace;
+    --yellow: #FFE600;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 12px; height: 12px; background: var(--green); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: transform 0.15s ease; mix-blend-mode: screen; }
+  .cursor-ring { width: 36px; height: 36px; border: 1px solid rgba(0,220,130,0.4); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); opacity:0.6; pointer-events:none; z-index:1000; }
+
+  /* NAV */
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:24px 60px; background:linear-gradient(to bottom,rgba(2,11,18,0.95),transparent); backdrop-filter:blur(2px); }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:var(--text); display:flex; align-items:center; gap:10px; cursor:none; }
+  .logo-dot { width:8px; height:8px; background:var(--green); border-radius:50%; box-shadow:0 0 16px var(--green); animation:pulse 2s infinite; }
+  .nav-links { display:flex; gap:40px; list-style:none; }
+  .nav-links a { font-size:12px; font-weight:300; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.3s; }
+  .nav-links a:hover { color:var(--green); }
+  .nav-links a.active-nav { color:var(--green); }
+  .nav-cta { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:10px 24px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; transition:all 0.3s; }
+  .nav-cta:hover { background:var(--green); color:var(--bg); }
+
+  /* Main Content */
+  .main-content { padding:120px 60px 80px; min-height:100vh; }
+  .page-header { margin-bottom:60px; }
+  .page-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,6vw,80px); letter-spacing:2px; line-height:1; margin-bottom:20px; }
+  .page-title em { font-family:'DM Serif Display',serif; font-style:italic; color:var(--green); }
+  .page-subtitle { font-size:16px; font-weight:300; color:var(--muted); line-height:1.8; max-width:600px; }
+
+  /* Arena Section */
+  .arena-section { display:grid; grid-template-columns:1fr 1fr; gap:60px; margin-bottom:60px; }
+  .arena-left { padding:40px; background:var(--surface); border:1px solid var(--border); }
+  .arena-title { font-family:'Bebas Neue',sans-serif; font-size:42px; letter-spacing:2px; margin-bottom:20px; }
+  .arena-desc { font-size:14px; font-weight:300; color:var(--muted); line-height:1.8; margin-bottom:30px; }
+  .arena-features { list-style:none; margin-bottom:30px; }
+  .arena-features li { font-family:var(--mono); font-size:12px; color:var(--muted); padding:8px 0; display:flex; align-items:center; gap:10px; }
+  .arena-features li::before { content:'▸'; color:var(--green); }
+  .start-btn { font-family:var(--mono); font-size:14px; letter-spacing:1px; padding:16px 32px; background:var(--green); color:var(--bg); border:none; cursor:none; font-weight:600; transition:opacity 0.3s; width:100%; }
+  .start-btn:hover { opacity:0.85; }
+
+  /* Live Challenge */
+  .live-challenge { background:var(--surface); border:1px solid var(--border); padding:30px; margin-bottom:40px; }
+  .challenge-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .challenge-title { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; }
+  .live-badge { font-family:var(--mono); font-size:10px; letter-spacing:1px; color:var(--green); display:flex; align-items:center; gap:6px; }
+  .live-dot { width:6px; height:6px; background:var(--green); border-radius:50%; box-shadow:0 0 8px var(--green); animation:pulse 1.5s infinite; }
+
+  /* Stock Selection Modal */
+  .stock-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,11,18,0.95); display:none; align-items:center; justify-content:center; z-index:2000; }
+  .stock-modal.active { display:flex; }
+  .stock-modal-content { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:40px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; }
+  .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
+  .modal-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; }
+  .modal-close { font-family:var(--mono); font-size:12px; color:var(--muted); cursor:pointer; padding:8px 16px; border:1px solid var(--border); background:transparent; transition:all 0.3s; }
+  .modal-close:hover { color:var(--text); border-color:var(--green); }
+  .stock-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:15px; margin-bottom:30px; }
+  .stock-card { background:rgba(0,220,130,0.05); border:1px solid var(--border); border-radius:8px; padding:20px; text-align:center; cursor:pointer; transition:all 0.3s; }
+  .stock-card:hover { border-color:var(--green); background:rgba(0,220,130,0.1); transform:translateY(-2px); }
+  .stock-card.selected { border-color:var(--green); background:var(--green-dim); }
+  .stock-symbol { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--text); margin-bottom:8px; }
+  .stock-name { font-family:var(--mono); font-size:11px; color:var(--muted); }
+  .stock-price { font-family:var(--mono); font-size:14px; color:var(--green); margin-top:8px; }
+  .modal-actions { display:flex; gap:15px; justify-content:center; }
+  .modal-btn { font-family:var(--mono); font-size:14px; letter-spacing:1px; padding:12px 24px; border:none; cursor:pointer; font-weight:600; transition:all 0.3s; border-radius:6px; }
+  .modal-btn-primary { background:var(--green); color:var(--bg); }
+  .modal-btn-primary:hover { opacity:0.85; }
+  .modal-btn-secondary { background:transparent; color:var(--text); border:1px solid var(--border); }
+  .modal-btn-secondary:hover { border-color:var(--green); }
+
+  /* Prediction Game */
+  .prediction-game { background:var(--surface); border:1px solid var(--border); padding:30px; margin-bottom:40px; display:none; }
+  .prediction-game.active { display:block; }
+  .game-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
+  .game-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; }
+  .game-timer { font-family:var(--mono); font-size:18px; color:var(--amber); font-weight:600; }
+  
+  .game-content { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-bottom:30px; }
+  .prediction-panel { background:rgba(0,220,130,0.05); border:1px solid var(--border); padding:25px; border-radius:8px; }
+  .panel-title { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+  .ai-panel .panel-title { color:var(--green); }
+  .human-panel .panel-title { color:var(--amber); }
+  
+  .prediction-info { margin-bottom:25px; }
+  .info-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; font-family:var(--mono); font-size:12px; }
+  .info-label { color:var(--muted); }
+  .info-value { color:var(--text); font-weight:500; }
+  
+  .prediction-buttons { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px; }
+  .pred-btn { padding:15px; border:2px solid var(--border); background:transparent; color:var(--text); font-family:var(--mono); font-size:14px; font-weight:600; letter-spacing:1px; cursor:pointer; transition:all 0.3s; border-radius:6px; }
+  .pred-btn:hover { border-color:var(--green); background:var(--green-dim); }
+  .pred-btn.up.selected { background:var(--green); color:var(--bg); border-color:var(--green); }
+  .pred-btn.down.selected { background:var(--red); color:var(--bg); border-color:var(--red); }
+  
+  .confidence-slider { margin-top:20px; }
+  .slider-label { font-family:var(--mono); font-size:11px; color:var(--muted); margin-bottom:8px; display:flex; justify-content:space-between; }
+  .confidence-bar { width:100%; height:6px; background:var(--border); border-radius:3px; position:relative; overflow:hidden; }
+  .confidence-fill { height:100%; background:linear-gradient(90deg, var(--red), var(--amber), var(--green)); transition:width 0.3s; }
+  
+  .live-data { background:rgba(245,166,35,0.05); border:1px solid var(--amber); padding:20px; border-radius:8px; margin-bottom:30px; }
+  .data-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
+  .data-title { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--amber); }
+  .data-refresh { font-family:var(--mono); font-size:10px; color:var(--muted); }
+  
+  .price-display { display:flex; align-items:baseline; gap:15px; margin-bottom:15px; }
+  .current-price { font-family:'Bebas Neue',sans-serif; font-size:36px; color:var(--text); }
+  .price-change { font-family:var(--mono); font-size:16px; font-weight:600; }
+  .price-change.up { color:var(--green); }
+  .price-change.down { color:var(--red); }
+  
+  .chart-container { height:150px; background:rgba(2,11,18,0.5); border:1px solid var(--border); border-radius:6px; margin-bottom:15px; position:relative; overflow:hidden; }
+  .mini-chart { width:100%; height:100%; }
+  
+  .result-panel { background:var(--surface); border:1px solid var(--border); padding:25px; border-radius:8px; margin-bottom:30px; display:none; }
+  .result-panel.show { display:block; }
+  .result-title { font-family:'Bebas Neue',sans-serif; font-size:24px; margin-bottom:20px; }
+  .result-content { display:grid; grid-template-columns:1fr 1fr; gap:30px; }
+  .result-card { padding:20px; border:1px solid var(--border); border-radius:8px; text-align:center; }
+  .result-card.winner { border-color:var(--green); background:rgba(0,220,130,0.05); }
+  .result-card.loser { border-color:var(--red); background:rgba(255,74,110,0.05); }
+  .result-label { font-family:var(--mono); font-size:11px; color:var(--muted); margin-bottom:8px; }
+  .result-value { font-family:'Bebas Neue',sans-serif; font-size:28px; }
+  .result-detail { font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:8px; }
+
+  /* Leaderboard */
+  .leaderboard { background:var(--surface); border:1px solid var(--border); padding:30px; }
+  .leaderboard-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; margin-bottom:30px; }
+  .leaderboard-table { width:100%; border-collapse: collapse; }
+  .leaderboard-table th { font-family:var(--mono); font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; padding:12px; text-align:left; border-bottom:1px solid var(--border); }
+  .leaderboard-table td { font-family:var(--mono); font-size:12px; padding:16px 12px; border-bottom:1px solid rgba(0,220,130,0.1); }
+  .leaderboard-table tr:hover { background:var(--green-dim); }
+  .rank { font-weight:600; color:var(--green); }
+  .player-name { color:var(--text); }
+  .accuracy { color:var(--muted); }
+  .score { font-family:'Bebas Neue',sans-serif; font-size:16px; color:var(--text); }
+
+  /* Animations */
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  @keyframes slideUp { to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="window.location.href='index.html'" style="cursor:none;">
+    <div class="logo-dot"></div>
+    ALPHA
+  </div>
+  <ul class="nav-links">
+    <li><a href="learning-module.html">Learning Module</a></li>
+    <li><a href="alpha-rush.html" class="active-nav">Alpha Rush</a></li>
+    <li><a href="market-analyzer.html">Market Analyzer</a></li>
+    <li><a href="portfolio-analyzer.html">Portfolio Analyzer</a></li>
+  </ul>
+  <button class="nav-cta" onclick="window.location.href='index.html'">BACK TO HOME</button>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">MARKET <em>PREDICTION</em> ARENA</h1>
+    <p class="page-subtitle">Practice predicting market movements in live simulated environments. Compete, build intuition, and sharpen your edge before risking real capital.</p>
+  </div>
+
+  <!-- Arena Section -->
+  <div class="arena-section">
+    <div class="arena-left">
+      <h2 class="arena-title">ENTER THE ARENA</h2>
+      <p class="arena-desc">Test your market prediction skills against other traders in real-time simulated challenges. No real money at risk - just pure skill and strategy.</p>
+      <ul class="arena-features">
+        <li>Live Simulations with real market data</li>
+        <li>Global Leaderboard rankings</li>
+        <li>Accuracy tracking & performance metrics</li>
+        <li>Real-time challenges & time pressure</li>
+        <li>AI-powered feedback & insights</li>
+        <li>Achievement badges & rewards</li>
+      </ul>
+      <button class="start-btn" onclick="startPredictionGame()">START CHALLENGE →</button>
+    </div>
+
+    <div class="live-challenge">
+      <div class="challenge-header">
+        <h3 class="challenge-title">LIVE CHALLENGE</h3>
+        <div class="live-badge">
+          <div class="live-dot"></div>
+          LIVE
+        </div>
+      </div>
+      <div class="challenge-content">
+        <div class="challenge-info">
+          <p><strong>Current Challenge:</strong> AI vs Human Prediction Battle</p>
+          <p><strong>Asset:</strong> <span id="challengeAsset">AAPL</span></p>
+          <p><strong>Participants:</strong> <span id="participantCount">247</span> traders</p>
+          <p><strong>Prize Pool:</strong> 1,000 Alpha Points</p>
+        </div>
+        <div class="challenge-stats">
+          <div class="stat-row">
+            <span class="stat-label">AI WIN RATE</span>
+            <span class="stat-value" id="aiWinRate">68%</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">HUMAN WIN RATE</span>
+            <span class="stat-value" id="humanWinRate">32%</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">ACTIVE GAMES</span>
+            <span class="stat-value" id="activeGames">12</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI vs Human Prediction Game -->
+  <div class="prediction-game" id="predictionGame">
+    <div class="game-header">
+      <h2 class="game-title">AI vs HUMAN PREDICTION BATTLE</h2>
+      <div class="game-timer" id="gameTimer">02:00</div>
+    </div>
+
+    <!-- Live Data Display -->
+    <div class="live-data">
+      <div class="data-header">
+        <div class="data-title">📊 LIVE MARKET DATA</div>
+        <div class="data-refresh">Updates every 5s</div>
+      </div>
+      <div class="price-display">
+        <div class="current-price" id="currentPrice">$175.42</div>
+        <div class="price-change up" id="priceChange">+2.34 (+1.35%)</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="miniChart" class="mini-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="game-content">
+      <!-- AI Prediction Panel -->
+      <div class="prediction-panel ai-panel">
+        <div class="panel-title">
+          🤖 AI PREDICTION
+        </div>
+        <div class="prediction-info">
+          <div class="info-row">
+            <span class="info-label">MODEL:</span>
+            <span class="info-value">NeuralNet v3.2</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">CONFIDENCE:</span>
+            <span class="info-value" id="aiConfidence">85%</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">PREDICTION:</span>
+            <span class="info-value" id="aiPrediction">Analyzing...</span>
+          </div>
+        </div>
+        <div class="prediction-buttons">
+          <button class="pred-btn up" id="aiUpBtn">📈 UP</button>
+          <button class="pred-btn down" id="aiDownBtn">📉 DOWN</button>
+        </div>
+        <div class="confidence-slider">
+          <div class="slider-label">
+            <span>CONFIDENCE</span>
+            <span id="aiConfidenceValue">85%</span>
+          </div>
+          <div class="confidence-bar">
+            <div class="confidence-fill" id="aiConfidenceBar" style="width: 85%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Human Prediction Panel -->
+      <div class="prediction-panel human-panel">
+        <div class="panel-title">
+          👤 YOUR PREDICTION
+        </div>
+        <div class="prediction-info">
+          <div class="info-row">
+            <span class="info-label">EXPERIENCE:</span>
+            <span class="info-value">Intermediate</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">ACCURACY:</span>
+            <span class="info-value">72.3%</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">STREAK:</span>
+            <span class="info-value">W3</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">YOUR PREDICTION:</span>
+            <span class="info-value" id="humanPredictionDisplay">Not Selected</span>
+          </div>
+        </div>
+        <div class="prediction-buttons">
+          <button class="pred-btn up" id="humanUpBtn" onclick="makePrediction('up')">📈 UP</button>
+          <button class="pred-btn down" id="humanDownBtn" onclick="makePrediction('down')">📉 DOWN</button>
+        </div>
+        <div class="confidence-slider">
+          <div class="slider-label">
+            <span>YOUR CONFIDENCE</span>
+            <span id="humanConfidenceValue">50%</span>
+          </div>
+          <input type="range" min="0" max="100" value="50" id="humanConfidenceSlider" oninput="updateHumanConfidence(this.value)" style="width: 100%; margin-top: 8px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Panel -->
+    <div class="result-panel" id="resultPanel">
+      <h3 class="result-title">🏆 BATTLE RESULTS</h3>
+      <div class="result-content">
+        <div class="result-card winner" id="winnerCard">
+          <div class="result-label">WINNER</div>
+          <div class="result-value" id="winnerName">—</div>
+          <div class="result-detail" id="winnerDetail">—</div>
+        </div>
+        <div class="result-card loser" id="loserCard">
+          <div class="result-label">LOSER</div>
+          <div class="result-value" id="loserName">—</div>
+          <div class="result-detail" id="loserDetail">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Selection Modal -->
+  <div class="stock-modal" id="stockModal">
+    <div class="stock-modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">SELECT STOCK TO PREDICT</h2>
+        <button class="modal-close" onclick="closeStockModal()">✕</button>
+      </div>
+      <div class="stock-grid" id="stockGrid">
+        <!-- Stocks will be populated by JavaScript -->
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-primary" onclick="startGameWithStock()">START PREDICTION</button>
+        <button class="modal-btn modal-secondary" onclick="closeStockModal()">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="leaderboard">
+    <h2 class="leaderboard-title">GLOBAL LEADERBOARD</h2>
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>RANK</th>
+          <th>TRADER</th>
+          <th>ACCURACY</th>
+          <th>CHALLENGES</th>
+          <th>SCORE</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="rank">#1</td>
+          <td class="player-name">AlphaWolf</td>
+          <td class="accuracy">87.3%</td>
+          <td class="accuracy">142</td>
+          <td class="score">18,420</td>
+        </tr>
+        <tr>
+          <td class="rank">#2</td>
+          <td class="player-name">MarketNinja</td>
+          <td class="accuracy">85.7%</td>
+          <td class="accuracy">128</td>
+          <td class="score">17,890</td>
+        </tr>
+        <tr>
+          <td class="rank">#3</td>
+          <td class="player-name">QuantQueen</td>
+          <td class="accuracy">84.2%</td>
+          <td class="accuracy">115</td>
+          <td class="score">16,750</td>
+        </tr>
+        <tr>
+          <td class="rank">#4</td>
+          <td class="player-name">BullRider</td>
+          <td class="accuracy">82.9%</td>
+          <td class="accuracy">103</td>
+          <td class="score">15,320</td>
+        </tr>
+        <tr>
+          <td class="rank">#5</td>
+          <td class="player-name">BearHunter</td>
+          <td class="accuracy">81.5%</td>
+          <td class="accuracy">98</td>
+          <td class="score">14,890</td>
+        </tr>
+        <tr>
+          <td class="rank">#6</td>
+          <td class="player-name">TechTrader</td>
+          <td class="accuracy">80.3%</td>
+          <td class="accuracy">92</td>
+          <td class="score">13,450</td>
+        </tr>
+        <tr>
+          <td class="rank">#7</td>
+          <td class="player-name">OptionsGuru</td>
+          <td class="accuracy">79.1%</td>
+          <td class="accuracy">87</td>
+          <td class="score">12,890</td>
+        </tr>
+        <tr>
+          <td class="rank">#8</td>
+          <td class="player-name">CryptoKing</td>
+          <td class="accuracy">78.4%</td>
+          <td class="accuracy">84</td>
+          <td class="score">12,340</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// Custom cursor
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursorRing');
+
+document.addEventListener('mousemove', (e) => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top = e.clientY + 'px';
+  cursorRing.style.left = e.clientX + 'px';
+  cursorRing.style.top = e.clientY + 'px';
+});
+
+document.addEventListener('mousedown', () => {
+  cursor.style.transform = 'scale(0.8)';
+  cursorRing.style.transform = 'scale(0.8)';
+});
+
+document.addEventListener('mouseup', () => {
+  cursor.style.transform = 'scale(1)';
+  cursorRing.style.transform = 'scale(1)';
+});
+
+// AI vs Human Prediction Game
+class PredictionGame {
+  constructor() {
+    this.apiKey = 'd0a5g9pr01qgdvklqp3gd0a5g9pr01qgdvklqp40';
+    this.currentAsset = 'AAPL';
+    this.selectedStock = null;
+    this.gameActive = false;
+    this.timeRemaining = 120; // 2 minutes
+    this.chart = null;
+    this.priceHistory = [];
+    this.aiPrediction = null;
+    this.humanPrediction = null;
+    this.startPrice = null;
+    this.currentPrice = null;
+    this.timerInterval = null;
+    this.dataInterval = null;
+    
+    this.availableStocks = [
+      { symbol: 'AAPL', name: 'Apple Inc.' },
+      { symbol: 'NVDA', name: 'NVIDIA Corp.' },
+      { symbol: 'TSLA', name: 'Tesla Inc.' },
+      { symbol: 'MSFT', name: 'Microsoft Corp.' },
+      { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+      { symbol: 'AMZN', name: 'Amazon.com Inc.' },
+      { symbol: 'META', name: 'Meta Platforms' },
+      { symbol: 'SPY', name: 'S&P 500 ETF' }
+    ];
+    
+    this.init();
+  }
+  
+  init() {
+    this.setupChart();
+    this.populateStockGrid();
+  }
+  
+  populateStockGrid() {
+    const stockGrid = document.getElementById('stockGrid');
+    if (!stockGrid) return;
+    
+    stockGrid.innerHTML = '';
+    
+    this.availableStocks.forEach(stock => {
+      const stockCard = document.createElement('div');
+      stockCard.className = 'stock-card';
+      stockCard.onclick = () => this.selectStock(stock);
+      stockCard.innerHTML = `
+        <div class="stock-symbol">${stock.symbol}</div>
+        <div class="stock-name">${stock.name}</div>
+        <div class="stock-price" id="price-${stock.symbol}">Loading...</div>
+      `;
+      stockGrid.appendChild(stockCard);
+    });
+    
+    // Load current prices
+    this.loadStockPrices();
+  }
+  
+  async loadStockPrices() {
+    for (const stock of this.availableStocks) {
+      try {
+        const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${this.apiKey}`);
+        const data = await response.json();
+        
+        if (data.c) {
+          const priceEl = document.getElementById(`price-${stock.symbol}`);
+          if (priceEl) priceEl.textContent = `$${data.c.toFixed(2)}`;
+        }
+      } catch (error) {
+        console.error(`Error loading ${stock.symbol}:`, error);
+        // Generate mock price
+        const priceEl = document.getElementById(`price-${stock.symbol}`);
+        if (priceEl) priceEl.textContent = `$${(150 + Math.random() * 200).toFixed(2)}`;
+      }
+    }
+  }
+  
+  selectStock(stock) {
+    // Remove previous selection
+    document.querySelectorAll('.stock-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+    
+    // Add selection to clicked card
+    event.currentTarget.classList.add('selected');
+    this.selectedStock = stock;
+    this.currentAsset = stock.symbol;
+    
+    console.log('Selected stock:', stock.symbol);
+  }
+  
+  setupChart() {
+    const ctx = document.getElementById('miniChart');
+    if (!ctx) return;
+    
+    this.chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Price',
+          data: [],
+          borderColor: '#00dc82',
+          backgroundColor: 'rgba(0, 220, 130, 0.1)',
+          borderWidth: 2,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(2, 11, 18, 0.9)',
+            titleColor: '#e8f4f0',
+            bodyColor: '#e8f4f0',
+            borderColor: '#00dc82',
+            borderWidth: 1
+          }
+        },
+        scales: {
+          x: {
+            display: false,
+            grid: { display: false }
+          },
+          y: {
+            display: false,
+            grid: { display: false }
+          }
+        },
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
+          intersect: false
+        }
+      }
+    });
+  }
+  
+  async fetchRealTimeData() {
+    try {
+      const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${this.currentAsset}&token=${this.apiKey}`);
+      const data = await response.json();
+      
+      if (data.c && data.pc) {
+        this.currentPrice = data.c;
+        const change = data.c - data.pc;
+        const changePercent = (change / data.pc) * 100;
+        
+        this.updatePriceDisplay(data.c, change, changePercent);
+        this.updateChart(data.c);
+        
+        return data.c;
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      // Generate mock data for demo
+      return this.generateMockPrice();
+    }
+  }
+  
+  generateMockPrice() {
+    const basePrice = 175;
+    const volatility = 2;
+    const mockPrice = basePrice + (Math.random() - 0.5) * volatility;
+    const change = mockPrice - basePrice;
+    const changePercent = (change / basePrice) * 100;
+    
+    this.updatePriceDisplay(mockPrice, change, changePercent);
+    this.updateChart(mockPrice);
+    
+    return mockPrice;
+  }
+  
+  updatePriceDisplay(price, change, changePercent) {
+    const priceEl = document.getElementById('currentPrice');
+    const changeEl = document.getElementById('priceChange');
+    
+    if (priceEl) priceEl.textContent = `$${price.toFixed(2)}`;
+    
+    if (changeEl) {
+      const isUp = change >= 0;
+      changeEl.className = `price-change ${isUp ? 'up' : 'down'}`;
+      changeEl.textContent = `${isUp ? '+' : ''}${change.toFixed(2)} (${isUp ? '+' : ''}${changePercent.toFixed(2)}%)`;
+    }
+  }
+  
+  updateChart(price) {
+    if (!this.chart) return;
+    
+    const now = new Date();
+    const timeLabel = now.toLocaleTimeString();
+    
+    this.chart.data.labels.push(timeLabel);
+    this.chart.data.datasets[0].data.push(price);
+    
+    // Keep only last 20 data points
+    if (this.chart.data.labels.length > 20) {
+      this.chart.data.labels.shift();
+      this.chart.data.datasets[0].data.shift();
+    }
+    
+    this.chart.update('none');
+  }
+  
+  startDataStream() {
+    // Update data every 5 seconds
+    this.dataInterval = setInterval(() => {
+      this.fetchRealTimeData();
+    }, 5000);
+    
+    // Initial fetch
+    this.fetchRealTimeData();
+  }
+  
+  startGame() {
+    if (!this.selectedStock) {
+      alert('Please select a stock first!');
+      return;
+    }
+    
+    this.gameActive = true;
+    this.timeRemaining = 120;
+    this.startPrice = this.currentPrice;
+    
+    // Close modal and show game
+    this.closeStockModal();
+    
+    // Show game panel
+    const gamePanel = document.getElementById('predictionGame');
+    if (gamePanel) gamePanel.classList.add('active');
+    
+    // Hide result panel
+    const resultPanel = document.getElementById('resultPanel');
+    if (resultPanel) resultPanel.classList.remove('show');
+    
+    // Update asset display
+    const assetEl = document.getElementById('challengeAsset');
+    if (assetEl) assetEl.textContent = this.currentAsset;
+    
+    // Start timer
+    this.startTimer();
+    
+    // Make both predictions simultaneously after 2 seconds
+    setTimeout(() => {
+      this.makeAIPrediction();
+      // Human makes prediction by clicking buttons
+    }, 2000);
+    
+    console.log('Game started! Stock:', this.currentAsset, 'Start price:', this.startPrice);
+  }
+  
+  startTimer() {
+    this.updateTimerDisplay();
+    
+    this.timerInterval = setInterval(() => {
+      this.timeRemaining--;
+      this.updateTimerDisplay();
+      
+      if (this.timeRemaining <= 0) {
+        this.endGame();
+      }
+    }, 1000);
+  }
+  
+  updateTimerDisplay() {
+    const minutes = Math.floor(this.timeRemaining / 60);
+    const seconds = this.timeRemaining % 60;
+    const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    const timerEl = document.getElementById('gameTimer');
+    if (timerEl) timerEl.textContent = display;
+  }
+  
+  makeAIPrediction() {
+    if (!this.gameActive) return;
+    
+    // Simulate AI analysis
+    const confidence = 70 + Math.random() * 25; // 70-95% confidence
+    const prediction = Math.random() > 0.5 ? 'up' : 'down';
+    
+    this.aiPrediction = {
+      direction: prediction,
+      confidence: confidence
+    };
+    
+    // Update UI
+    this.updateAIDisplay(prediction, confidence);
+    
+    console.log('AI Prediction:', prediction, 'Confidence:', confidence.toFixed(1) + '%');
+  }
+  
+  updateAIDisplay(prediction, confidence) {
+    const predEl = document.getElementById('aiPrediction');
+    const confEl = document.getElementById('aiConfidence');
+    const confBarEl = document.getElementById('aiConfidenceBar');
+    const confValueEl = document.getElementById('aiConfidenceValue');
+    const upBtn = document.getElementById('aiUpBtn');
+    const downBtn = document.getElementById('aiDownBtn');
+    
+    if (predEl) predEl.textContent = prediction.toUpperCase();
+    if (confEl) confEl.textContent = confidence.toFixed(1) + '%';
+    if (confBarEl) confBarEl.style.width = confidence + '%';
+    if (confValueEl) confValueEl.textContent = confidence.toFixed(1) + '%';
+    
+    // Update button states
+    if (upBtn && downBtn) {
+      upBtn.classList.toggle('selected', prediction === 'up');
+      downBtn.classList.toggle('selected', prediction === 'down');
+    }
+  }
+  
+  makePrediction(direction) {
+    if (!this.gameActive || this.humanPrediction) return;
+    
+    const confidence = document.getElementById('humanConfidenceSlider').value;
+    
+    this.humanPrediction = {
+      direction: direction,
+      confidence: confidence
+    };
+    
+    // Update UI
+    const upBtn = document.getElementById('humanUpBtn');
+    const downBtn = document.getElementById('humanDownBtn');
+    const predDisplay = document.getElementById('humanPredictionDisplay');
+    
+    upBtn.classList.toggle('selected', direction === 'up');
+    downBtn.classList.toggle('selected', direction === 'down');
+    
+    if (predDisplay) {
+      predDisplay.textContent = direction.toUpperCase();
+      predDisplay.style.color = direction === 'up' ? 'var(--green)' : 'var(--red)';
+    }
+    
+    console.log('Human Prediction:', direction, 'Confidence:', confidence + '%');
+  }
+  
+  updateHumanConfidence(value) {
+    const confValueEl = document.getElementById('humanConfidenceValue');
+    if (confValueEl) confValueEl.textContent = value + '%';
+  }
+  
+  endGame() {
+    this.gameActive = false;
+    
+    // Clear intervals
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    if (this.dataInterval) clearInterval(this.dataInterval);
+    
+    // Calculate results
+    const finalPrice = this.currentPrice;
+    const actualDirection = finalPrice > this.startPrice ? 'up' : 'down';
+    const priceMove = Math.abs(finalPrice - this.startPrice);
+    const priceMovePercent = (priceMove / this.startPrice) * 100;
+    
+    // Determine winner
+    let winner = null;
+    let winnerDetails = '';
+    
+    if (this.aiPrediction && this.aiPrediction.direction === actualDirection) {
+      winner = 'AI';
+      winnerDetails = `Correct: ${actualDirection.toUpperCase()} | Confidence: ${this.aiPrediction.confidence.toFixed(1)}%`;
+    }
+    
+    if (this.humanPrediction && this.humanPrediction.direction === actualDirection) {
+      if (winner) {
+        // Both correct - higher confidence wins
+        if (this.humanPrediction.confidence > this.aiPrediction.confidence) {
+          winner = 'Human';
+          winnerDetails = `Correct: ${actualDirection.toUpperCase()} | Confidence: ${this.humanPrediction.confidence}%`;
+        }
+      } else {
+        winner = 'Human';
+        winnerDetails = `Correct: ${actualDirection.toUpperCase()} | Confidence: ${this.humanPrediction.confidence}%`;
+      }
+    }
+    
+    if (!winner) {
+      winner = 'No one';
+      winnerDetails = `Actual: ${actualDirection.toUpperCase()} | Move: ${priceMovePercent.toFixed(2)}%`;
+    }
+    
+    // Update statistics
+    this.updateStatistics(winner);
+    
+    // Show results
+    this.showResults(winner, winnerDetails, actualDirection, priceMovePercent);
+    
+    console.log('Game ended! Winner:', winner, 'Actual direction:', actualDirection);
+  }
+  
+  updateStatistics(winner) {
+    const aiWinRateEl = document.getElementById('aiWinRate');
+    const humanWinRateEl = document.getElementById('humanWinRate');
+    
+    if (winner === 'AI' && aiWinRateEl) {
+      const currentRate = parseFloat(aiWinRateEl.textContent);
+      aiWinRateEl.textContent = (currentRate + 0.5).toFixed(1) + '%';
+    }
+    
+    if (winner === 'Human' && humanWinRateEl) {
+      const currentRate = parseFloat(humanWinRateEl.textContent);
+      humanWinRateEl.textContent = (currentRate + 0.5).toFixed(1) + '%';
+    }
+  }
+  
+  showResults(winner, winnerDetails, actualDirection, priceMovePercent) {
+    const resultPanel = document.getElementById('resultPanel');
+    const winnerNameEl = document.getElementById('winnerName');
+    const winnerDetailEl = document.getElementById('winnerDetail');
+    const loserNameEl = document.getElementById('loserName');
+    const loserDetailEl = document.getElementById('loserDetail');
+    const winnerCard = document.getElementById('winnerCard');
+    const loserCard = document.getElementById('loserCard');
+    
+    if (resultPanel) resultPanel.classList.add('show');
+    
+    if (winner === 'AI') {
+      if (winnerNameEl) winnerNameEl.textContent = '🤖 AI';
+      if (winnerDetailEl) winnerDetailEl.textContent = winnerDetails;
+      if (loserNameEl) loserNameEl.textContent = '👤 Human';
+      if (loserDetailEl) loserDetailEl.textContent = `Wrong: Predicted ${this.humanPrediction?.direction || 'None'}`;
+    } else if (winner === 'Human') {
+      if (winnerNameEl) winnerNameEl.textContent = '👤 Human';
+      if (winnerDetailEl) winnerDetailEl.textContent = winnerDetails;
+      if (loserNameEl) loserNameEl.textContent = '🤖 AI';
+      if (loserDetailEl) loserDetailEl.textContent = `Wrong: Predicted ${this.aiPrediction?.direction}`;
+    } else {
+      if (winnerNameEl) winnerNameEl.textContent = '🤝 Draw';
+      if (winnerDetailEl) winnerDetailEl.textContent = winnerDetails;
+      if (loserNameEl) loserNameEl.textContent = '🤝 Draw';
+      if (loserDetailEl) loserDetailEl.textContent = 'Both incorrect';
+    }
+    
+    // Update card styles
+    if (winnerCard && loserCard) {
+      if (winner === 'Human') {
+        winnerCard.className = 'result-card winner';
+        loserCard.className = 'result-card loser';
+      } else if (winner === 'AI') {
+        winnerCard.className = 'result-card winner';
+        loserCard.className = 'result-card loser';
+      } else {
+        winnerCard.className = 'result-card';
+        loserCard.className = 'result-card';
+      }
+    }
+  }
+  
+  closeStockModal() {
+    const modal = document.getElementById('stockModal');
+    if (modal) modal.classList.remove('active');
+  }
+  
+  openStockModal() {
+    const modal = document.getElementById('stockModal');
+    if (modal) modal.classList.add('active');
+    this.loadStockPrices(); // Refresh prices when opening
+  }
+  
+  reset() {
+    this.gameActive = false;
+    this.aiPrediction = null;
+    this.humanPrediction = null;
+    this.selectedStock = null;
+    
+    // Reset UI
+    const gamePanel = document.getElementById('predictionGame');
+    if (gamePanel) gamePanel.classList.remove('active');
+    
+    const resultPanel = document.getElementById('resultPanel');
+    if (resultPanel) resultPanel.classList.remove('show');
+    
+    // Reset buttons
+    const buttons = document.querySelectorAll('.pred-btn');
+    buttons.forEach(btn => btn.classList.remove('selected'));
+    
+    // Reset AI display
+    const aiPredEl = document.getElementById('aiPrediction');
+    if (aiPredEl) aiPredEl.textContent = 'Analyzing...';
+    
+    // Reset Human prediction display
+    const humanPredEl = document.getElementById('humanPredictionDisplay');
+    if (humanPredEl) {
+      humanPredEl.textContent = 'Not Selected';
+      humanPredEl.style.color = 'var(--text)';
+    }
+    
+    // Clear intervals
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    if (this.dataInterval) clearInterval(this.dataInterval);
+    
+    // Restart data stream
+    this.startDataStream();
+  }
+}
+
+// Global functions
+function startPredictionGame() {
+  if (!window.game) {
+    window.game = new PredictionGame();
+  }
+  window.game.openStockModal();
+}
+
+function closeStockModal() {
+  if (window.game) {
+    window.game.closeStockModal();
+  }
+}
+
+function startGameWithStock() {
+  if (window.game) {
+    window.game.startGame();
+  }
+}
+
+function makePrediction(direction) {
+  if (window.game) {
+    window.game.makePrediction(direction);
+  }
+}
+
+function updateHumanConfidence(value) {
+  if (window.game) {
+    window.game.updateHumanConfidence(value);
+  }
+}
+
+// Initialize game on page load
+document.addEventListener('DOMContentLoaded', () => {
+  window.game = new PredictionGame();
+  
+  // Update participant count periodically
+  setInterval(() => {
+    const countEl = document.getElementById('participantCount');
+    const gamesEl = document.getElementById('activeGames');
+    if (countEl) {
+      const currentCount = parseInt(countEl.textContent);
+      countEl.textContent = currentCount + Math.floor(Math.random() * 5) - 2;
+    }
+    if (gamesEl) {
+      const currentGames = parseInt(gamesEl.textContent);
+      gamesEl.textContent = Math.max(5, Math.min(20, currentGames + Math.floor(Math.random() * 3) - 1));
+    }
+  }, 10000);
+});
+</script>
+
+</body>
+</html>
