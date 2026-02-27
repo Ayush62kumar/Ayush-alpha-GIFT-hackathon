@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macro Economics - Learning Module | ALPHA</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020b12;
+    --surface: #061520;
+    --border: rgba(0, 220, 130, 0.15);
+    --green: #00dc82;
+    --green-dim: rgba(0, 220, 130, 0.08);
+    --amber: #f5a623;
+    --red: #ff4a6e;
+    --text: #e8f4f0;
+    --muted: rgba(232, 244, 240, 0.45);
+    --mono: 'DM Mono', monospace;
+    --yellow: #FFE600;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 12px; height: 12px; background: var(--green); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: transform 0.15s ease; mix-blend-mode: screen; }
+  .cursor-ring { width: 36px; height: 36px; border: 1px solid rgba(0,220,130,0.4); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); opacity:0.6; pointer-events:none; z-index:1000; }
+
+  /* NAV */
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:24px 60px; background:linear-gradient(to bottom,rgba(2,11,18,0.95),transparent); backdrop-filter:blur(2px); }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:var(--text); display:flex; align-items:center; gap:10px; cursor:none; }
+  .logo-dot { width:8px; height:8px; background:var(--green); border-radius:50%; box-shadow:0 0 16px var(--green); animation:pulse 2s infinite; }
+  .nav-links { display:flex; gap:40px; list-style:none; }
+  .nav-links a { font-size:12px; font-weight:300; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.3s; }
+  .nav-links a:hover { color:var(--green); }
+  .nav-cta { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:10px 24px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; transition:all 0.3s; }
+  .nav-cta:hover { background:var(--green); color:var(--bg); }
+
+  /* Module Content */
+  .module-container { padding:120px 60px 80px; max-width:1200px; margin:0 auto; }
+  .module-header { margin-bottom:60px; }
+  .module-breadcrumb { font-family:var(--mono); font-size:11px; color:var(--muted); margin-bottom:20px; }
+  .module-breadcrumb a { color:var(--green); text-decoration:none; }
+  .module-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,6vw,80px); letter-spacing:2px; line-height:1; margin-bottom:20px; }
+  .module-subtitle { font-size:16px; font-weight:300; color:var(--muted); line-height:1.8; max-width:600px; }
+  .module-meta { display:flex; gap:30px; margin-top:30px; }
+  .meta-item { display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .meta-icon { font-size:16px; }
+
+  /* Progress Bar */
+  .progress-section { background:var(--surface); border:1px solid var(--border); padding:30px; margin-bottom:40px; border-radius:12px; }
+  .progress-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .progress-title { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; }
+  .progress-percentage { font-family:var(--mono); font-size:18px; color:var(--green); }
+  .progress-bar { height:8px; background:rgba(0,220,130,0.1); border-radius:4px; overflow:hidden; margin-bottom:20px; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--green),var(--amber)); border-radius:4px; transition:width 0.5s ease; }
+  .progress-stats { display:flex; gap:40px; font-family:var(--mono); font-size:12px; color:var(--muted); }
+
+  /* Content Sections */
+  .content-section { background:var(--surface); border:1px solid var(--border); padding:40px; margin-bottom:30px; border-radius:12px; position:relative; }
+  .section-number { position:absolute; top:-15px; left:40px; background:var(--green); color:var(--bg); font-family:'Bebas Neue',sans-serif; font-size:20px; padding:5px 15px; border-radius:20px; }
+  .section-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; margin-bottom:20px; margin-top:10px; }
+  .section-content { font-size:15px; line-height:1.8; color:var(--muted); }
+  .section-content h3 { font-family:'DM Serif Display',serif; font-size:20px; color:var(--text); margin:25px 0 15px; }
+  .section-content p { margin-bottom:15px; }
+  .section-content ul { margin:15px 0 15px 30px; }
+  .section-content li { margin-bottom:8px; }
+  .section-content .highlight { background:var(--green-dim); padding:2px 6px; border-radius:4px; color:var(--green); font-weight:500; }
+  .section-content .key-term { font-family:var(--mono); font-size:14px; background:rgba(245,166,35,0.1); padding:2px 8px; border-radius:4px; color:var(--amber); }
+
+  /* Interactive Elements */
+  .checkpoint-box { background:rgba(0,220,130,0.05); border:1px solid var(--border); padding:20px; margin:30px 0; border-radius:8px; display:flex; align-items:center; gap:20px; }
+  .checkpoint-checkbox { width:24px; height:24px; border:2px solid var(--green); border-radius:6px; cursor:none; display:flex; align-items:center; justify-content:center; transition:all 0.3s; }
+  .checkpoint-checkbox:hover { background:var(--green-dim); }
+  .checkpoint-checkbox.checked { background:var(--green); color:var(--bg); }
+  .checkpoint-content { flex:1; }
+  .checkpoint-title { font-family:var(--mono); font-size:14px; font-weight:600; margin-bottom:5px; }
+  .checkpoint-desc { font-size:12px; color:var(--muted); }
+
+  /* Economic Indicators */
+  .indicator-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin:20px 0; }
+  .indicator-card { background:rgba(2,11,18,0.5); border:1px solid var(--border); padding:15px; border-radius:8px; text-align:center; }
+  .indicator-name { font-family:var(--mono); font-size:12px; color:var(--green); margin-bottom:8px; }
+  .indicator-value { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--text); margin-bottom:5px; }
+  .indicator-change { font-family:var(--mono); font-size:10px; }
+  .indicator-change.positive { color:var(--green); }
+  .indicator-change.negative { color:var(--red); }
+
+  /* Action Buttons */
+  .action-buttons { display:flex; gap:20px; margin-top:40px; }
+  .btn-primary { font-family:var(--mono); font-size:14px; letter-spacing:1px; padding:14px 32px; background:var(--green); color:var(--bg); border:none; cursor:none; font-weight:600; transition:all 0.3s; border-radius:8px; }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,220,130,0.3); }
+  .btn-secondary { font-family:var(--mono); font-size:14px; letter-spacing:1px; padding:14px 32px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; font-weight:600; transition:all 0.3s; border-radius:8px; }
+  .btn-secondary:hover { background:var(--green-dim); }
+
+  /* Animations */
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  @keyframes slideIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .content-section { animation:slideIn 0.6s ease forwards; }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="window.location.href='index.html'" style="cursor:none;">
+    <div class="logo-dot"></div>
+    ALPHA
+  </div>
+  <ul class="nav-links">
+    <li><a href="learning-module.html" class="active-nav">Learning Module</a></li>
+    <li><a href="alpha-rush.html">Alpha Rush</a></li>
+    <li><a href="market-analyzer.html">Market Analyzer</a></li>
+    <li><a href="portfolio-analyzer.html">Portfolio Analyzer</a></li>
+    <li><a href="news-intelligence.html">News Intelligence</a></li>
+  </ul>
+  <button class="nav-cta" onclick="window.location.href='learning-module.html'">BACK TO MODULES</button>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="module-container">
+  <div class="module-header">
+    <div class="module-breadcrumb">
+      <a href="learning-module.html">Learning Modules</a> → Macro Economics
+    </div>
+    <h1 class="module-title">MACRO <em>ECONOMICS</em></h1>
+    <p class="module-subtitle">Master economic indicators, policy impacts, and global market dynamics to understand the big picture forces that drive financial markets and investment opportunities.</p>
+    <div class="module-meta">
+      <div class="meta-item">
+        <span class="meta-icon">🌍</span>
+        <span>Advanced Level</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-icon">⏱️</span>
+        <span>65 min read</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-icon">🎯</span>
+        <span>8 Lessons</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Section -->
+  <div class="progress-section">
+    <div class="progress-header">
+      <h3 class="progress-title">YOUR PROGRESS</h3>
+      <span class="progress-percentage" id="progressPercentage">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+    </div>
+    <div class="progress-stats">
+      <span>Completed: <span id="completedCount">0</span>/8 checkpoints</span>
+      <span>Time spent: <span id="timeSpent">0</span> minutes</span>
+      <span>Last accessed: Just now</span>
+    </div>
+  </div>
+
+  <!-- Section 1: Introduction to Macro Economics -->
+  <div class="content-section">
+    <div class="section-number">01</div>
+    <h2 class="section-title">Introduction to Macro Economics</h2>
+    <div class="section-content">
+      <p>Macroeconomics is the study of <span class="highlight">economy-wide phenomena and their impact on financial markets</span>. Unlike microeconomics, which focuses on individual agents, macroeconomics examines aggregate economic variables and their relationships.</p>
+      
+      <h3>Why Macro Economics Matters to Investors</h3>
+      <ul>
+        <li><span class="key-term">Market Environment</span> - Economic conditions drive market performance</li>
+        <li><span class="key-term">Interest Rate Impact</span> - Affects borrowing costs and asset valuations</li>
+        <li><span class="key-term">Sector Rotation</span> - Different sectors perform in different economic phases</li>
+        <li><span class="key-term">Risk Management</span> - Economic cycles affect portfolio risk</li>
+        <li><span class="key-term">Global Opportunities</span> - International economic trends create investment opportunities</li>
+      </ul>
+
+      <h3>Key Economic Agents</h3>
+      <ul>
+        <li><span class="highlight">Households</span> - Consumption decisions, savings, labor supply</li>
+        <li><span class="highlight">Firms</span> - Investment decisions, production, employment</li>
+        <li><span class="highlight">Government</span> - Fiscal policy, regulation, public services</li>
+        <li><span class="highlight">Central Banks</span> - Monetary policy, financial stability</li>
+        <li><span class="highlight">Foreign Sector</span> - Trade, capital flows, exchange rates</li>
+      </ul>
+
+      <h3>Economic Policy Types</h3>
+      <ul>
+        <li><span class="key-term">Fiscal Policy</span> - Government spending and taxation decisions</li>
+        <li><span class="key-term">Monetary Policy</span> - Central bank actions on money supply and interest rates</li>
+        <li><span class="key-term">Trade Policy</span> - Tariffs, quotas, trade agreements</li>
+        <li><span class="key-term">Regulatory Policy</span> - Rules governing financial markets and business</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 1)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Macro Economics Basics</div>
+          <div class="checkpoint-desc">Can you explain why macroeconomics matters to investors?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: GDP and Economic Growth -->
+  <div class="content-section">
+    <div class="section-number">02</div>
+    <h2 class="section-title">GDP and Economic Growth</h2>
+    <div class="section-content">
+      <p>Gross Domestic Product (GDP) is the <span class="highlight">primary measure of economic output and growth</span>. Understanding GDP components and growth patterns is essential for analyzing economic health.</p>
+      
+      <h3>What is GDP?</h3>
+      <p>GDP measures the total monetary value of all final goods and services produced within a country's borders in a specific time period.</p>
+      
+      <h3>GDP Calculation Methods</h3>
+      <ul>
+        <li><span class="key-term">Production Approach</span> - Sum of value added at each production stage</li>
+        <li><span class="key-term">Income Approach</span> - Sum of all incomes earned in production</li>
+        <li><span class="key-term">Expenditure Approach</span> - C + I + G + (X - M)</li>
+      </ul>
+
+      <h3>GDP Components (Expenditure Approach)</h3>
+      <ul>
+        <li><span class="highlight">Consumption (C)</span> - Household spending on goods and services (~68% of US GDP)</li>
+        <li><span class="highlight">Investment (I)</span> - Business spending on capital, residential construction (~17%)</li>
+        <li><span class="highlight">Government Spending (G)</span> - Federal, state, local government purchases (~17%)</li>
+        <li><span class="highlight">Net Exports (X-M)</span> - Exports minus imports (~-3% for US)</li>
+      </ul>
+
+      <h3>Types of GDP</h3>
+      <ul>
+        <li><span class="key-term">Nominal GDP</span> - Measured at current prices</li>
+        <li><span class="key-term">Real GDP</span> - Adjusted for inflation, better for comparison</li>
+        <li><span class="key-term">GDP per Capita</span> - GDP divided by population, measures living standards</li>
+        <li><span class="key-term">Potential GDP</span> - Maximum sustainable output</li>
+      </ul>
+
+      <h3>Economic Growth Patterns</h3>
+      <ul>
+        <li><span class="highlight">Trend Growth</span> - Long-term average growth rate</li>
+        <li><span class="highlight">Business Cycles</span> - Short-term fluctuations around trend</li>
+        <li><span class="highlight">Secular Stagnation</span> - Prolonged period of low growth</li>
+        <li><span class="highlight">Rapid Growth</span> - Emerging markets catching up to developed</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 2)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: GDP Understanding</div>
+          <div class="checkpoint-desc">Can you explain the four components of GDP?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Inflation and Price Levels -->
+  <div class="content-section">
+    <div class="section-number">03</div>
+    <h2 class="section-title">Inflation and Price Levels</h2>
+    <div class="section-content">
+      <p>Inflation is the rate at which <span class="highlight">general price levels are increasing, reducing purchasing power</span>. Understanding inflation dynamics is crucial for investment returns and economic policy.</p>
+      
+      <h3>Measuring Inflation</h3>
+      <ul>
+        <li><span class="key-term">Consumer Price Index (CPI)</span> - Basket of consumer goods and services</li>
+        <li><span class="key-term">Producer Price Index (PPI)</span> - Wholesale price changes</li>
+        <li><span class="key-term">GDP Deflator</span> - Broadest measure of price changes</li>
+        <li><span class="key-term">Core Inflation</span> - Excludes food and energy volatility</li>
+      </ul>
+
+      <h3>Types of Inflation</h3>
+      <ul>
+        <li><span class="highlight">Demand-Pull Inflation</span> - Excess demand over supply</li>
+        <li><span class="highlight">Cost-Push Inflation</span> - Rising production costs passed to consumers</li>
+        <li><span class="highlight">Built-in Inflation</span> - Wage-price spiral expectations</li>
+        <li><span class="highlight">Hyperinflation</span> - Extremely rapid price increases (>50% monthly)</li>
+      </ul>
+
+      <h3>Causes of Inflation</h3>
+      <ul>
+        <li><span class="key-term">Monetary Expansion</span> - Too much money chasing too few goods</li>
+        <li><span class="key-term">Supply Shocks</span> - Oil price spikes, natural disasters</li>
+        <li><span class="key-term">Demand Shocks</span> - Increased consumer spending, government stimulus</li>
+        <li><span class="key-term">Exchange Rates</span> - Currency depreciation increases import prices</li>
+      </ul>
+
+      <h3>Impact on Financial Markets</h3>
+      <ul>
+        <li><span class="highlight">Stocks</span> - Mixed impact; some sectors benefit, others suffer</li>
+        <li><span class="highlight">Bonds</span> - Negative impact; fixed payments lose real value</li>
+        <li><span class="highlight">Real Assets</span> - Positive impact; tangible assets preserve value</li>
+        <li><span class="highlight">Currencies</span> - High inflation weakens currency value</li>
+      </ul>
+
+      <h3>Deflation</h3>
+      <p>Deflation (falling prices) can be more damaging than moderate inflation:</p>
+      <ul>
+        <li>Delays consumer spending (waiting for lower prices)</li>
+        <li>Increases real debt burden</li>
+        <li>Can lead to economic depression</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 3)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Inflation Concepts</div>
+          <div class="checkpoint-desc">Can you explain the difference between demand-pull and cost-push inflation?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Employment and Labor Markets -->
+  <div class="content-section">
+    <div class="section-number">04</div>
+    <h2 class="section-title">Employment and Labor Markets</h2>
+    <div class="section-content">
+      <p>Labor market conditions are <span class="highlight">key indicators of economic health and future consumer spending</span>. Employment data drives monetary policy and market expectations.</p>
+      
+      <h3>Key Employment Indicators</h3>
+      <ul>
+        <li><span class="key-term">Unemployment Rate</span> - Percentage of labor force without jobs</li>
+        <li><span class="key-term">Labor Force Participation</span> - Percentage of population working or seeking work</li>
+        <li><span class="key-term">Job Growth</span> - Net change in employment</li>
+        <li><span class="key-term">Wage Growth</span> - Changes in compensation levels</li>
+      </ul>
+
+      <h3>Types of Unemployment</h3>
+      <ul>
+        <li><span class="highlight">Frictional Unemployment</span> - Temporary unemployment during job transitions</li>
+        <li><span class="highlight">Structural Unemployment</span> - Mismatch between skills and job requirements</li>
+        <li><span class="highlight">Cyclical Unemployment</span> - Unemployment due to economic downturns</li>
+        <li><span class="highlight">Natural Rate of Unemployment</span> - Frictional + structural unemployment</li>
+      </ul>
+
+      <h3>Labor Market Dynamics</h3>
+      <ul>
+        <li><span class="key-term">Job Creation and Destruction</span> - Dynamic process of economic reallocation</li>
+        <li><span class="key-term">Skills Mismatch</span> - Technology changes create skill gaps</li>
+        <li><span class="key-term">Gig Economy</span> - Rise of non-traditional work arrangements</li>
+        <li><span class="key-term">Demographic Trends</span> - Aging populations affect labor supply</li>
+      </ul>
+
+      <h3>Wage and Price Dynamics</h3>
+      <ul>
+        <li><span class="highlight">Phillips Curve</span> - Historical relationship between unemployment and inflation</li>
+        <li><span class="highlight">Wage-Price Spiral</span> - Higher wages lead to higher prices</li>
+        <li><span class="highlight">Productivity Link</span> - Wages tied to worker productivity</li>
+        <li><span class="highlight">Minimum Wage Impact</span> - Effects on employment and income distribution</li>
+      </ul>
+
+      <h3>Global Labor Markets</h3>
+      <ul>
+        <li><span class="key-term">Outsourcing</span> - Companies moving jobs overseas</li>
+        <li><span class="key-term">Immigration</span> - Impact on labor supply and wages</li>
+        <li><span class="key-term">Automation</span> - Technology replacing human labor</li>
+        <li><span class="key-term">Remote Work</span> - Geographic barriers to labor markets</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 4)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Labor Markets</div>
+          <div class="checkpoint-desc">Can you explain the different types of unemployment?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 5: Monetary Policy -->
+  <div class="content-section">
+    <div class="section-number">05</div>
+    <h2 class="section-title">Monetary Policy and Central Banking</h2>
+    <div class="section-content">
+      <p>Monetary policy is <span class="highlight">central bank actions to manage money supply and interest rates</span> to achieve macroeconomic objectives. It's one of the most powerful influences on financial markets.</p>
+      
+      <h3>Central Bank Objectives</h3>
+      <ul>
+        <li><span class="key-term">Price Stability</span> - Maintaining low, stable inflation (typically 2%)</li>
+        <li><span class="key-term">Maximum Employment</span> - Achieving full employment</li>
+        <li><span class="key-term">Economic Growth</span> - Supporting sustainable economic expansion</li>
+        <li><span class="key-term">Financial Stability</span> - Preventing financial crises</li>
+      </ul>
+
+      <h3>Monetary Policy Tools</h3>
+      <ul>
+        <li><span class="highlight">Policy Interest Rates</span> - Fed Funds Rate, ECB Main Refinancing Rate</li>
+        <li><span class="highlight">Open Market Operations</span> - Buying/selling government securities</li>
+        <li><span class="highlight">Reserve Requirements</span> - Banks' required cash reserves</li>
+        <li><span class="highlight">Quantitative Easing</span> - Large-scale asset purchases</li>
+        <li><span class="highlight">Forward Guidance</span> - Communicating future policy intentions</li>
+      </ul>
+
+      <h3>Types of Monetary Policy</h3>
+      <ul>
+        <li><span class="key-term">Expansionary (Accommodative)</span> - Lower rates, increase money supply</li>
+        <li><span class="key-term">Contractionary (Restrictive)</span> - Raise rates, decrease money supply</li>
+        <li><span class="key-term">Neutral</span> - Policy neither stimulating nor restricting</li>
+      </ul>
+
+      <h3>Major Central Banks</h3>
+      <ul>
+        <li><span class="highlight">Federal Reserve (Fed)</span> - United States</li>
+        <li><span class="highlight">European Central Bank (ECB)</span> - Eurozone</li>
+        <li><span class="highlight">Bank of England (BoE)</span> - United Kingdom</li>
+        <li><span class="highlight">Bank of Japan (BoJ)</span> - Japan</li>
+        <li><span class="highlight">People's Bank of China (PBoC)</span> - China</li>
+      </ul>
+
+      <h3>Transmission Mechanism</h3>
+      <p>How monetary policy affects the real economy:</p>
+      <ul>
+        <li>Interest rates affect borrowing costs</li>
+        <li>Asset prices influence wealth effects</li>
+        <li>Exchange rates impact exports/imports</li>
+        <li>Expectations shape economic behavior</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 5)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Monetary Policy</div>
+          <div class="checkpoint-desc">Can you explain the main tools of monetary policy?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 6: Fiscal Policy -->
+  <div class="content-section">
+    <div class="section-number">06</div>
+    <h2 class="section-title">Fiscal Policy and Government Finance</h2>
+    <div class="section-content">
+      <p>Fiscal policy involves <span class="highlight">government decisions about spending and taxation</span> to influence economic activity. It works alongside monetary policy to achieve economic objectives.</p>
+      
+      <h3>Fiscal Policy Tools</h3>
+      <ul>
+        <li><span class="key-term">Government Spending</span> - Infrastructure, education, defense, social programs</li>
+        <li><span class="key-term">Taxation</span> - Income taxes, corporate taxes, sales taxes, tariffs</li>
+        <li><span class="key-term">Transfer Payments</span> - Social Security, unemployment benefits</li>
+        <li><span class="key-term">Subsidies</span> - Industry support, agricultural assistance</li>
+      </ul>
+
+      <h3>Types of Fiscal Policy</h3>
+      <ul>
+        <li><span class="highlight">Expansionary</span> - Increase spending, decrease taxes</li>
+        <li><span class="highlight">Contractionary</span> - Decrease spending, increase taxes</li>
+        <li><span class="highlight">Neutral</span> - Balanced budget approach</li>
+      </ul>
+
+      <h3>Government Budget</h3>
+      <ul>
+        <li><span class="key-term">Budget Deficit</span> - Spending exceeds revenue</li>
+        <li><span class="key-term">Budget Surplus</span> - Revenue exceeds spending</li>
+        <li><span class="key-term">National Debt</span> - Accumulated deficits over time</li>
+        <li><span class="key-term">Debt-to-GDP Ratio</span> - Debt burden relative to economy size</li>
+      </ul>
+
+      <h3>Fiscal Multipliers</h3>
+      <p>The impact of fiscal policy on economic output:</p>
+      <ul>
+        <li><span class="highlight">Spending Multiplier</span> - Direct impact of government purchases</li>
+        <li><span class="highlight">Tax Multiplier</span> - Indirect impact through disposable income</li>
+        <li><span class="highlight">Crowding Out</span> - Government borrowing reducing private investment</li>
+      </ul>
+
+      <h3>Fiscal Policy Challenges</h3>
+      <ul>
+        <li><span class="key-term">Political Constraints</span> - Difficult to raise taxes or cut spending</li>
+        <li><span class="key-term">Time Lags</span> - Delays in implementation and effects</li>
+        <li><span class="key-term">Debt Sustainability</span> - Long-term debt burden concerns</li>
+        <li><span class="key-term">Generational Equity</span> - Burden on future taxpayers</li>
+      </ul>
+
+      <h3>Modern Monetary Theory (MMT)</h3>
+      <p>Controversial approach suggesting governments with sovereign currency can run larger deficits:</p>
+        <li>Focus on inflation rather than deficits</li>
+        <li>Government spending not constrained by revenue</li>
+        <li>Taxes serve to control inflation, not fund spending</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 6)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Fiscal Policy</div>
+          <div class="checkpoint-desc">Can you explain the difference between expansionary and contractionary fiscal policy?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 7: International Economics -->
+  <div class="content-section">
+    <div class="section-number">07</div>
+    <h2 class="section-title">International Economics</h2>
+    <div class="section-content">
+      <p>International economics examines <span class="highlight">economic interactions between countries</span>, including trade, capital flows, and exchange rates. Globalization has made these factors increasingly important.</p>
+      
+      <h3>International Trade</h3>
+      <ul>
+        <li><span class="key-term">Comparative Advantage</span> - Countries specialize in what they produce best</li>
+        <li><span class="key-term">Trade Balance</span> - Exports minus imports (surplus/deficit)</li>
+        <li><span class="key-term">Current Account</span> - Trade + services + income + transfers</li>
+        <li><span class="key-term">Capital Account</span> - Cross-border investment flows</li>
+      </ul>
+
+      <h3>Exchange Rates</h3>
+      <ul>
+        <li><span class="highlight">Floating Rates</span> - Determined by market supply and demand</li>
+        <li><span class="highlight">Fixed Rates</span> - Pegged to another currency or basket</li>
+        <li><span class="highlight">Managed Float</span> - Market-determined with central bank intervention</li>
+      </ul>
+
+      <h3>Exchange Rate Determinants</h3>
+      <ul>
+        <li><span class="key-term">Interest Rate Differentials</span> - Higher rates attract capital</li>
+        <li><span class="key-term">Inflation Differentials</span> - High inflation depreciates currency</li>
+        <li><span class="key-term">Economic Growth</span> - Strong growth attracts investment</li>
+        <li><span class="key-term">Political Stability</span> - Uncertainty weakens currency</li>
+      </ul>
+
+      <h3>Trade Policies</h3>
+      <ul>
+        <li><span class="highlight">Free Trade</span> - Minimal barriers to international commerce</li>
+        <li><span class="highlight">Protectionism</span> - Tariffs, quotas, trade restrictions</li>
+        <li><span class="highlight">Trade Agreements</span> - NAFTA, EU, USMCA, RCEP</li>
+        <li><span class="highlight">Trade Wars</span> - Retaliatory tariffs and disputes</li>
+      </ul>
+
+      <h3>Global Economic Integration</h3>
+      <ul>
+        <li><span class="key-term">Supply Chains</span> - Global production networks</li>
+        <li><span class="key-term">Multinational Corporations</span> - Companies operating across borders</li>
+        <li><span class="key-term">Financial Globalization</span> - Integrated capital markets</li>
+        <li><span class="key-term">Technology Transfer</span> - Knowledge spread across countries</li>
+      </ul>
+
+      <h3>Emerging Markets</h3>
+      <ul>
+        <li><span class="highlight">Rapid Growth</span> - Higher growth rates than developed economies</li>
+        <li><span class="highlight">Higher Risk</span> - Political, currency, and economic volatility</li>
+        <li><span class="highlight">Demographic Dividend</span> - Young, growing populations</li>
+        <li><span class="highlight">Urbanization</span> - Rural to urban migration driving growth</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 7)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: International Economics</div>
+          <div class="checkpoint-desc">Can you explain the concept of comparative advantage?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 8: Economic Cycles and Market Impact -->
+  <div class="content-section">
+    <div class="section-number">08</div>
+    <h2 class="section-title">Economic Cycles and Market Impact</h2>
+    <div class="section-content">
+      <p>Economic cycles are <span class="highlight">recurring patterns of expansion and contraction</span> in economic activity. Understanding these cycles helps investors position portfolios for different market environments.</p>
+      
+      <h3>The Business Cycle</h3>
+      <ul>
+        <li><span class="key-term">Expansion</span> - Growing GDP, low unemployment, rising confidence</li>
+        <li><span class="key-term">Peak</span> - Maximum growth, inflationary pressures build</li>
+        <li><span class="key-term">Contraction (Recession)</span> - Declining GDP, rising unemployment</li>
+        <li><span class="key-term">Trough</span> - Bottom of cycle, conditions for recovery</li>
+      </ul>
+
+      <h3>Economic Indicators by Cycle Stage</h3>
+      
+      <h4>Leading Indicators (predict future changes)</h4>
+      <ul>
+        <li>Stock market performance</li>
+        <li>Building permits</li>
+        <li>Consumer confidence</li>
+        <li>Manufacturing orders</li>
+      </ul>
+
+      <h4>Coincident Indicators (current conditions)</h4>
+      <ul>
+        <li>GDP growth</li>
+        <li>Employment levels</li>
+        <li>Industrial production</li>
+        <li>Retail sales</li>
+      </ul>
+
+      <h4>Lagging Indicators (confirm trends)</h4>
+      <ul>
+        <li>Unemployment rate</li>
+        <li>Inflation rate</li>
+        <li>Interest rates</li>
+        <li>Labor costs</li>
+      </ul>
+
+      <h3>Sector Rotation by Economic Cycle</h3>
+      <ul>
+        <li><span class="highlight">Early Expansion</span> - Technology, consumer discretionary</li>
+        <li><span class="highlight">Mid Expansion</span> - Industrial, materials</li>
+        <li><span class="highlight">Late Expansion</span> - Energy, utilities</li>
+        <li><span class="highlight">Recession</span> - Consumer staples, healthcare, utilities</li>
+      </ul>
+
+      <h3>Asset Class Performance by Cycle</h3>
+      <ul>
+        <li><span class="key-term">Stocks</span> - Perform best in early expansion, worst in recession</li>
+        <li><span class="key-term">Bonds</span> - Perform best in recession, worst in expansion</li>
+        <li><span class="key-term">Commodities</span> - Perform best in late expansion</li>
+        <li><span class="key-term">Cash</span> - Provides stability during recessions</li>
+      </ul>
+
+      <h3>Investment Strategies by Cycle</h3>
+      <ul>
+        <li><span class="highlight">Expansion</span> - Growth stocks, cyclical sectors</li>
+        <li><span class="highlight">Peak</span> - Quality stocks, international diversification</li>
+        <li><span class="highlight">Recession</span> - Defensive stocks, bonds, cash</li>
+        <li><span class="highlight">Recovery</span> - Small caps, high beta stocks</li>
+      </ul>
+
+      <h3>Cycle Forecasting Challenges</h3>
+      <ul>
+        <li><span class="key-term">Variable Length</span> - Cycles vary in duration</li>
+        <li><span class="key-term">Policy Impact</span> - Government actions can alter cycles</li>
+        <li><span class="key-term">Global Factors</span> - International events affect domestic cycles</li>
+        <li><span class="key-term">Structural Changes</span> - Technology, demographics change patterns</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 8)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Economic Cycles</div>
+          <div class="checkpoint-desc">Can you explain the four stages of the business cycle?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button class="btn-primary" onclick="completeModule()">MARK AS COMPLETE</button>
+    <button class="btn-secondary" onclick="window.location.href='learning-module.html'">BACK TO MODULES</button>
+  </div>
+</div>
+
+<script>
+    // Module progress tracking
+    let moduleProgress = {
+        checkpoints: [false, false, false, false, false, false, false, false],
+        startTime: Date.now(),
+        completed: false
+    };
+
+    // Load saved progress
+    function loadProgress() {
+        const saved = localStorage.getItem('macro-economics_progress');
+        if (saved) {
+            moduleProgress = JSON.parse(saved);
+            updateUI();
+        }
+        updateTimeSpent();
+    }
+
+    // Save progress
+    function saveProgress() {
+        localStorage.setItem('macro-economics_progress', JSON.stringify(moduleProgress));
+        updateLearningModuleDashboard();
+    }
+
+    // Toggle checkpoint
+    function toggleCheckpoint(element, checkpointIndex) {
+        const isChecked = element.classList.contains('checked');
+        
+        if (isChecked) {
+            element.classList.remove('checked');
+            element.querySelector('.checkmark').style.display = 'none';
+            moduleProgress.checkpoints[checkpointIndex - 1] = false;
+        } else {
+            element.classList.add('checked');
+            element.querySelector('.checkmark').style.display = 'block';
+            moduleProgress.checkpoints[checkpointIndex - 1] = true;
+            
+            // Visual feedback
+            element.style.animation = 'pulse 0.5s ease';
+            setTimeout(() => {
+                element.style.animation = '';
+            }, 500);
+        }
+        
+        updateProgress();
+        saveProgress();
+    }
+
+    // Update progress bar
+    function updateProgress() {
+        const completedCount = moduleProgress.checkpoints.filter(c => c).length;
+        const totalCount = moduleProgress.checkpoints.length;
+        const percentage = Math.round((completedCount / totalCount) * 100);
+        
+        document.getElementById('progressFill').style.width = percentage + '%';
+        document.getElementById('progressPercentage').textContent = percentage + '%';
+        document.getElementById('completedCount').textContent = completedCount;
+    }
+
+    // Update time spent
+    function updateTimeSpent() {
+        setInterval(() => {
+            const minutes = Math.floor((Date.now() - moduleProgress.startTime) / 60000);
+            document.getElementById('timeSpent').textContent = minutes;
+        }, 60000);
+    }
+
+    // Complete module
+    function completeModule() {
+        const completedCount = moduleProgress.checkpoints.filter(c => c).length;
+        
+        if (completedCount < 8) {
+            alert('Please complete all checkpoints before marking the module as complete.');
+            return;
+        }
+        
+        moduleProgress.completed = true;
+        moduleProgress.completionTime = Date.now();
+        saveProgress();
+        
+        // Show success message
+        const button = event.target;
+        button.textContent = '✓ MODULE COMPLETED';
+        button.style.background = 'var(--amber)';
+        button.style.color = 'var(--bg)';
+        
+        // Update dashboard
+        updateLearningModuleDashboard();
+        
+        // Redirect after delay
+        setTimeout(() => {
+            window.location.href = 'learning-module.html';
+        }, 2000);
+    }
+
+    // Update learning module dashboard
+    function updateLearningModuleDashboard() {
+        // Update dashboard data
+        let dashboardData = JSON.parse(localStorage.getItem('learningModule_progress') || '{}');
+        
+        dashboardData['macro-economics'] = {
+            completed: moduleProgress.completed,
+            progress: moduleProgress.checkpoints.filter(c => c).length,
+            timeSpent: Math.floor((Date.now() - moduleProgress.startTime) / 60000),
+            lastAccessed: new Date().toISOString()
+        };
+        
+        localStorage.setItem('learningModule_progress', JSON.stringify(dashboardData));
+    }
+
+    // Update UI based on saved progress
+    function updateUI() {
+        // Update checkpoints
+        moduleProgress.checkpoints.forEach((completed, index) => {
+            if (completed) {
+                const checkbox = document.querySelectorAll('.checkpoint-checkbox')[index];
+                if (checkbox) {
+                    checkbox.classList.add('checked');
+                    checkbox.querySelector('.checkmark').style.display = 'block';
+                }
+            }
+        });
+        
+        // Update progress
+        updateProgress();
+        
+        // Show completion status
+        if (moduleProgress.completed) {
+            const button = document.querySelector('.btn-primary');
+            button.textContent = '✓ MODULE COMPLETED';
+            button.style.background = 'var(--amber)';
+            button.style.color = 'var(--bg)';
+        }
+    }
+
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const cursorRing = document.getElementById('cursorRing');
+
+    document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+        cursorRing.style.left = e.clientX + 'px';
+        cursorRing.style.top = e.clientY + 'px';
+    });
+
+    document.addEventListener('mousedown', () => {
+        cursor.style.transform = 'scale(0.8)';
+        cursorRing.style.transform = 'scale(0.8)';
+    });
+
+    document.addEventListener('mouseup', () => {
+        cursor.style.transform = 'scale(1)';
+        cursorRing.style.transform = 'scale(1)';
+    });
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProgress();
+    });
+</script>
+
+</body>
+</html>

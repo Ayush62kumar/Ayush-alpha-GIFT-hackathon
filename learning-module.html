@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learning Module - ALPHA Finance Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020b12;
+    --surface: #061520;
+    --border: rgba(0, 220, 130, 0.15);
+    --green: #00dc82;
+    --green-dim: rgba(0, 220, 130, 0.08);
+    --amber: #f5a623;
+    --red: #ff4a6e;
+    --text: #e8f4f0;
+    --muted: rgba(232, 244, 240, 0.45);
+    --mono: 'DM Mono', monospace;
+    --yellow: #FFE600;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 12px; height: 12px; background: var(--green); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: transform 0.15s ease; mix-blend-mode: screen; }
+  .cursor-ring { width: 36px; height: 36px; border: 1px solid rgba(0,220,130,0.4); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); opacity:0.6; pointer-events:none; z-index:1000; }
+
+  /* NAV */
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:24px 60px; background:linear-gradient(to bottom,rgba(2,11,18,0.95),transparent); backdrop-filter:blur(2px); }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:var(--text); display:flex; align-items:center; gap:10px; cursor:none; }
+  .logo-dot { width:8px; height:8px; background:var(--green); border-radius:50%; box-shadow:0 0 16px var(--green); animation:pulse 2s infinite; }
+  .nav-links { display:flex; gap:40px; list-style:none; }
+  .nav-links a { font-size:12px; font-weight:300; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.3s; }
+  .nav-links a:hover { color:var(--green); }
+  .nav-links a.active-nav { color:var(--green); }
+  .nav-cta { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:10px 24px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; transition:all 0.3s; }
+  .nav-cta:hover { background:var(--green); color:var(--bg); }
+
+  /* Main Content */
+  .main-content { padding:120px 60px 80px; min-height:100vh; }
+  .page-header { margin-bottom:60px; }
+  .page-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,6vw,80px); letter-spacing:2px; line-height:1; margin-bottom:20px; }
+  .page-title em { font-family:'DM Serif Display',serif; font-style:italic; color:var(--green); }
+  .page-subtitle { font-size:16px; font-weight:300; color:var(--muted); line-height:1.8; max-width:600px; }
+
+  /* Learning Modules Grid */
+  .modules-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(350px,1fr)); gap:30px; margin-bottom:60px; }
+  .module-card { background:var(--surface); border:1px solid var(--border); padding:40px; position:relative; overflow:hidden; transition:all 0.3s; cursor:none; }
+  .module-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--green); transform:scaleX(0); transform-origin:left; transition:transform 0.4s; }
+  .module-card:hover::before { transform:scaleX(1); }
+  .module-card:hover { background:var(--green-dim); transform:translateY(-4px); }
+  .module-number { font-family:'Bebas Neue',sans-serif; font-size:64px; color:rgba(0,220,130,0.15); line-height:1; margin-bottom:20px; }
+  .module-icon { font-size:32px; margin-bottom:20px; }
+  .module-title { font-family:'DM Serif Display',serif; font-size:24px; margin-bottom:16px; line-height:1.2; }
+  .module-description { font-size:14px; font-weight:300; line-height:1.8; color:var(--muted); margin-bottom:24px; }
+  .module-features { list-style:none; padding:0; margin:15px 0; }
+  .module-features li { font-size:12px; color:var(--muted); margin-bottom:6px; padding-left:15px; position:relative; }
+  .module-features li::before { content:'✓'; position:absolute; left:0; color:var(--green); }
+  .module-btn { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:12px 24px; background:var(--green); color:var(--bg); border:none; cursor:none; font-weight:600; transition:all 0.3s; margin-top:15px; }
+  .module-btn:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(0,220,130,0.3); }
+  /* Level Selection */
+  .level-selection { margin-bottom:60px; }
+  .level-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(350px,1fr)); gap:30px; }
+  .level-card { background:var(--surface); border:1px solid var(--border); padding:40px; border-radius:16px; transition:all 0.3s; cursor:none; position:relative; }
+  .level-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--green),var(--amber)); opacity:0; transition:opacity 0.3s; }
+  .level-card:hover { transform:translateY(-5px); border-color:var(--green); box-shadow:0 20px 40px rgba(0,220,130,0.1); }
+  .level-card:hover::before { opacity:1; }
+  .level-card.intermediate-level::before { background:linear-gradient(90deg,var(--amber),var(--green)); }
+  .level-card.intermediate-level:hover { border-color:var(--amber); box-shadow:0 20px 40px rgba(245,166,35,0.1); }
+  .level-card.advanced-level::before { background:linear-gradient(90deg,var(--purple),var(--amber),var(--green)); }
+  .level-card.advanced-level:hover { border-color:var(--purple); box-shadow:0 20px 40px rgba(155, 89, 182, 0.1); }
+  .level-header { display:flex; align-items:center; gap:20px; margin-bottom:25px; }
+  .level-icon { font-size:48px; }
+  .level-info { flex:1; }
+  .level-name { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; margin-bottom:5px; }
+  .level-desc { font-size:14px; color:var(--muted); }
+  .level-features { margin-bottom:25px; }
+  .level-feature { display:flex; align-items:center; gap:12px; margin-bottom:12px; font-size:14px; }
+  .feature-icon { font-size:16px; }
+  .level-progress { margin-bottom:25px; }
+  .level-btn { font-family:var(--mono); font-size:14px; letter-spacing:1px; padding:14px 28px; background:var(--green); color:var(--bg); border:none; cursor:none; font-weight:600; transition:all 0.3s; border-radius:8px; width:100%; }
+  .level-btn:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,220,130,0.3); }
+  .intermediate-level .level-btn { background:var(--amber); }
+  .intermediate-level .level-btn:hover { box-shadow:0 10px 30px rgba(245,166,35,0.3); }
+  .advanced-level .level-btn { background:var(--purple); }
+  .advanced-level .level-btn:hover { box-shadow:0 10px 30px rgba(155, 89, 182, 0.3); }
+
+  /* Trading Simulator Quick Access */
+  .simulator-quick-access { margin-bottom:60px; }
+  .simulator-card { background:linear-gradient(135deg,var(--surface),rgba(0,220,130,0.05)); border:2px solid var(--green); padding:40px; border-radius:16px; }
+  .simulator-content { display:flex; justify-content:space-between; align-items:center; gap:40px; }
+  .simulator-info { flex:1; }
+  .simulator-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; margin-bottom:15px; }
+  .simulator-desc { font-size:16px; color:var(--muted); line-height:1.6; margin-bottom:25px; }
+  .simulator-stats { display:flex; gap:30px; }
+  .simulator-stats .stat { text-align:center; }
+  .simulator-stats .stat-label { display:block; font-family:var(--mono); font-size:12px; color:var(--muted); margin-bottom:5px; }
+  .simulator-stats .stat-value { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--green); }
+  .simulator-btn { font-family:var(--mono); font-size:16px; letter-spacing:1px; padding:16px 32px; background:var(--green); color:var(--bg); border:none; cursor:none; font-weight:600; transition:all 0.3s; border-radius:8px; white-space:nowrap; }
+  .simulator-btn:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,220,130,0.3); }
+
+  /* Progress Section */
+  .progress-section { background:var(--surface); border:1px solid var(--border); padding:40px; margin-bottom:40px; }
+  .progress-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; margin-bottom:30px; }
+  .progress-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:30px; }
+  .progress-item { text-align:center; }
+  .progress-value { font-family:'Bebas Neue',sans-serif; font-size:48px; color:var(--green); line-height:1; margin-bottom:8px; }
+  .progress-label { font-family:var(--mono); font-size:11px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
+
+  /* Animations */
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  @keyframes slideUp { to{opacity:1;transform:translateY(0)} }
+
+  /* Chatbot Styles */
+  .chatbot-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 30px;
+    margin: 40px 0;
+    border-radius: 12px;
+  }
+
+  .chatbot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .chatbot-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+
+  .chatbot-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .chatbot-status .status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  .chatbot-container {
+    background: rgba(2, 11, 18, 0.5);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .chat-messages {
+    height: 400px;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .message {
+    display: flex;
+    gap: 12px;
+    max-width: 80%;
+  }
+
+  .bot-message {
+    align-self: flex-start;
+  }
+
+  .user-message {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  .message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .bot-message .message-avatar {
+    background: var(--green);
+  }
+
+  .user-message .message-avatar {
+    background: var(--amber);
+  }
+
+  .message-content {
+    background: rgba(232, 244, 240, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 15px;
+    flex: 1;
+  }
+
+  .user-message .message-content {
+    background: rgba(0, 220, 130, 0.1);
+    border-color: var(--green);
+  }
+
+  .message-content p {
+    margin: 0 0 10px 0;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .message-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  .message-content ul {
+    margin: 10px 0;
+    padding-left: 20px;
+  }
+
+  .message-content li {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    margin: 5px 0;
+  }
+
+  .chat-input-container {
+    padding: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .input-wrapper {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .chat-input {
+    flex: 1;
+    background: rgba(232, 244, 240, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: all 0.3s;
+  }
+
+  .chat-input:focus {
+    border-color: var(--green);
+    background: rgba(232, 244, 240, 0.08);
+  }
+
+  .chat-input::placeholder {
+    color: var(--muted);
+  }
+
+  .send-btn {
+    background: var(--green);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .send-btn:hover {
+    opacity: 0.8;
+  }
+
+  .chat-warning {
+    display: none;
+    background: rgba(245, 166, 35, 0.1);
+    border: 1px solid var(--amber);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--amber);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-align: center;
+  }
+
+  /* Scrollbar styling */
+  .chat-messages::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .chat-messages::-webkit-scrollbar-track {
+    background: rgba(232, 244, 240, 0.05);
+  }
+
+  .chat-messages::-webkit-scrollbar-thumb {
+    background: var(--green);
+    border-radius: 3px;
+  }
+
+  .chat-messages::-webkit-scrollbar-thumb:hover {
+    background: var(--green);
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="window.location.href='index.html'" style="cursor:none;">
+    <div class="logo-dot"></div>
+    ALPHA
+  </div>
+  <ul class="nav-links">
+    <li><a href="learning-module.html" class="active-nav">Learning Module</a></li>
+    <li><a href="alpha-rush.html">Alpha Rush</a></li>
+    <li><a href="market-analyzer.html">Market Analyzer</a></li>
+    <li><a href="portfolio-analyzer.html">Portfolio Analyzer</a></li>
+  </ul>
+  <button class="nav-cta" onclick="window.location.href='index.html'">BACK TO HOME</button>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">LEARNING <em>MODULES</em></h1>
+    <p class="page-subtitle">Master financial markets with our comprehensive learning paths. Choose your skill level and progress from fundamentals to advanced strategies.</p>
+  </div>
+
+  <!-- Progress Overview -->
+  <div class="progress-overview">
+    <div class="progress-header">
+      <div class="progress-title">YOUR OVERALL PROGRESS</div>
+      <div class="progress-stats">
+        <div class="stat-item">
+          <div class="stat-value" id="overallProgress">0%</div>
+          <div class="stat-label">OVERALL PROGRESS</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="completedModules">0</div>
+          <div class="stat-label">MODULES COMPLETED</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="totalTime">0h</div>
+          <div class="stat-label">TIME SPENT</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="currentLevel">Beginner</div>
+          <div class="stat-label">CURRENT LEVEL</div>
+        </div>
+      </div>
+    </div>
+    <div class="overall-progress">
+      <div class="overall-progress-fill" id="overallProgressFill" style="width: 0%;"></div>
+    </div>
+  </div>
+
+  <!-- Skill Level Selection -->
+  <div class="level-selection">
+    <h2 class="section-title">CHOOSE YOUR LEARNING PATH</h2>
+    <div class="level-grid">
+      <!-- Beginner Level -->
+      <div class="level-card beginner-level" onclick="window.location.href='learning-module-beginner.html'">
+        <div class="level-header">
+          <div class="level-icon">🌱</div>
+          <div class="level-info">
+            <h3 class="level-name">BEGINNER</h3>
+            <p class="level-desc">Start your financial education journey</p>
+          </div>
+        </div>
+        <div class="level-features">
+          <div class="level-feature">
+            <span class="feature-icon">📚</span>
+            <span>5 Foundational Modules</span>
+          </div>
+          <div class="level-feature">
+            <span class="feature-icon">⏱️</span>
+            <span>3.5 hours content</span>
+          </div>
+          <div class="level-feature">
+            <span class="feature-icon">🎯</span>
+            <span>Trading Simulator ($2,000)</span>
+          </div>
+        </div>
+        <div class="level-progress" id="beginnerLevelProgress">
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 0%;"></div>
+          </div>
+          <span class="progress-text">0% Complete</span>
+        </div>
+        <button class="level-btn">START LEARNING →</button>
+      </div>
+
+      <!-- Intermediate Level -->
+      <div class="level-card intermediate-level" onclick="window.location.href='learning-module-intermediate.html'">
+        <div class="level-header">
+          <div class="level-icon">🚀</div>
+          <div class="level-info">
+            <h3 class="level-name">INTERMEDIATE</h3>
+            <p class="level-desc">Build advanced trading strategies</p>
+          </div>
+        </div>
+        <div class="level-features">
+          <div class="level-feature">
+            <span class="feature-icon">📚</span>
+            <span>5 Intermediate Modules</span>
+          </div>
+          <div class="level-feature">
+            <span class="feature-icon">⏱️</span>
+            <span>4.5 hours content</span>
+          </div>
+          <div class="level-feature">
+            <span class="feature-icon">🎯</span>
+            <span>Trading Simulator ($5,000)</span>
+          </div>
+        </div>
+        <div class="level-progress" id="intermediateLevelProgress">
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 0%;"></div>
+          </div>
+          <span class="progress-text">0% Complete</span>
+        </div>
+        <button class="level-btn">CONTINUE LEARNING →</button>
+      </div>
+
+      <!-- Advanced Level -->
+      <div class="level-card advanced-level" onclick="window.location.href='learning-module-advanced.html'">
+        <div class="level-header">
+          <div class="level-icon">🏆</div>
+          <div class="level-info">
+            <h3 class="level-name">ADVANCED</h3>
+            <p class="level-desc">Master professional trading techniques</p>
+          </div>
+        </div>
+        <div class="level-features">
+          <div class="level-feature">
+            <span class="feature-icon">📚</span>
+            <span>5 Expert Modules</span>
+          </div>
+          <div class="level-feature">
+            <span class="feature-icon">⏱️</span>
+            <span>6 hours content</span>
+          </div>
+          <div class="level-feature">
+            <span class="feature-icon">🎯</span>
+            <span>Trading Simulator ($10,000)</span>
+          </div>
+        </div>
+        <div class="level-progress" id="advancedLevelProgress">
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 0%;"></div>
+          </div>
+          <span class="progress-text">0% Complete</span>
+        </div>
+        <button class="level-btn">MASTER ADVANCED →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Access Trading Simulator -->
+  <div class="simulator-quick-access">
+    <div class="simulator-card">
+      <div class="simulator-content">
+        <div class="simulator-info">
+          <h3 class="simulator-title">🎯 TRADING SIMULATOR</h3>
+          <p class="simulator-desc">Practice trading with virtual money in a risk-free environment. Learn from mistakes without losing real capital!</p>
+          <div class="simulator-stats" id="simulatorStats">
+            <div class="stat">
+              <span class="stat-label">Current Level:</span>
+              <span class="stat-value" id="simulatorLevel">Not Started</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Total Trades:</span>
+              <span class="stat-value" id="simulatorTrades">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">P&L:</span>
+              <span class="stat-value" id="simulatorPnL">$0.00</span>
+            </div>
+          </div>
+        </div>
+        <button class="simulator-btn" onclick="window.location.href='trading-simulator.html'">PRACTICE TRADING →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Finance Chatbot Section -->
+<div class="chatbot-section">
+  <div class="chatbot-header">
+    <h3 class="chatbot-title">💬 FINANCE ASSISTANT</h3>
+    <div class="chatbot-status">
+      <div class="status-dot"></div>
+      <span>Finance Only</span>
+    </div>
+  </div>
+  <div class="chatbot-container">
+    <div class="chat-messages" id="chatMessages">
+      <div class="message bot-message">
+        <div class="message-avatar">🤖</div>
+        <div class="message-content">
+          <p>Hello! I'm your finance assistant. I can help you with:</p>
+          <ul>
+            <li>Stock market analysis</li>
+            <li>Financial concepts</li>
+            <li>Trading strategies</li>
+            <li>Investment advice</li>
+            <li>Market trends</li>
+          </ul>
+          <p><strong>Please ask only finance-related questions.</strong></p>
+        </div>
+      </div>
+    </div>
+    <div class="chat-input-container">
+      <div class="input-wrapper">
+        <input type="text" id="chatInput" placeholder="Ask about stocks, finance, trading..." class="chat-input">
+        <button id="sendBtn" class="send-btn">Send</button>
+      </div>
+      <div class="chat-warning" id="chatWarning">
+        ⚠️ Only finance-related questions are allowed
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="api-client.js"></script>
+<script>
+// Custom cursor
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursorRing');
+
+document.addEventListener('mousemove', (e) => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top = e.clientY + 'px';
+  cursorRing.style.left = e.clientX + 'px';
+  cursorRing.style.top = e.clientY + 'px';
+});
+
+document.addEventListener('mousedown', () => {
+  cursor.style.transform = 'scale(0.8)';
+  cursorRing.style.transform = 'scale(0.8)';
+});
+
+document.addEventListener('mouseup', () => {
+  cursor.style.transform = 'scale(1)';
+  cursorRing.style.transform = 'scale(1)';
+});
+
+// Open trading simulator
+function openSimulator() {
+  window.location.href = 'trading-simulator.html';
+}
+
+// Start module function
+function startModule(moduleId) {
+  // Map module IDs to actual files
+  const moduleMapping = {
+    'financial-basics': 'module-markets-101.html',
+    'asset-classes': 'module-markets-101.html',
+    'trading-concepts': 'module-markets-101.html',
+    'risk-management': 'module-markets-101.html',
+    'first-portfolio': 'module-markets-101.html',
+    'technical-analysis': 'module-technical-analysis.html',
+    'fundamental-analysis': 'module-fundamental-analysis.html',
+    'market-psychology': 'module-markets-101.html',
+    'sector-analysis': 'module-markets-101.html',
+    'advanced-strategies': 'module-markets-101.html',
+    'options-derivatives': 'module-options-derivatives.html',
+    'macro-economics': 'module-macro-economics.html',
+    'ai-quant-strategies': 'module-ai-quant-strategies.html',
+    'portfolio-management': 'module-markets-101.html',
+    'hft': 'module-ai-quant-strategies.html'
+  };
+  
+  const targetFile = moduleMapping[moduleId] || 'module-markets-101.html';
+  window.location.href = targetFile;
+}
+
+// Load and update module progress
+async function loadModuleProgress() {
+  try {
+    // Try to get progress from backend first
+    if (window.alphaAPI && window.alphaAPI.isAuthenticated()) {
+      try {
+        const backendProgress = await window.alphaAPI.getUserProgress();
+        updateUIFromBackendData(backendProgress);
+        return;
+      } catch (error) {
+        console.log('Backend progress not available, using localStorage');
+      }
+    }
+    
+    // Fallback to localStorage
+    const progressData = localStorage.getItem('learningModule_progress');
+    if (progressData) {
+      const data = JSON.parse(progressData);
+      updateUIFromLocalStorage(data);
+    }
+    
+    // Update simulator stats
+    updateSimulatorStats();
+  } catch (error) {
+    console.error('Error loading progress:', error);
+    if (window.AlphaUtils) {
+      AlphaUtils.handleAPIError(error, 'loading progress');
+    } else {
+      console.error('Progress loading error:', error);
+    }
+  }
+}
+
+// Update UI from backend data
+function updateUIFromBackendData(backendData) {
+  const allModules = [
+    // Beginner modules
+    { id: 'financial-basics', totalCheckpoints: 6, level: 'beginner' },
+    { id: 'asset-classes', totalCheckpoints: 5, level: 'beginner' },
+    { id: 'trading-concepts', totalCheckpoints: 6, level: 'beginner' },
+    { id: 'risk-management', totalCheckpoints: 7, level: 'beginner' },
+    { id: 'first-portfolio', totalCheckpoints: 8, level: 'beginner' },
+    // Intermediate modules
+    { id: 'technical-analysis', totalCheckpoints: 8, level: 'intermediate' },
+    { id: 'fundamental-analysis', totalCheckpoints: 7, level: 'intermediate' },
+    { id: 'market-psychology', totalCheckpoints: 6, level: 'intermediate' },
+    { id: 'sector-analysis', totalCheckpoints: 7, level: 'intermediate' },
+    { id: 'advanced-strategies', totalCheckpoints: 8, level: 'intermediate' },
+    // Advanced modules
+    { id: 'options-derivatives', totalCheckpoints: 9, level: 'advanced' },
+    { id: 'macro-economics', totalCheckpoints: 8, level: 'advanced' },
+    { id: 'ai-quant-strategies', totalCheckpoints: 10, level: 'advanced' },
+    { id: 'portfolio-management', totalCheckpoints: 9, level: 'advanced' },
+    { id: 'hft', totalCheckpoints: 10, level: 'advanced' }
+  ];
+  
+  let totalCompleted = 0;
+  let totalTime = 0;
+  let beginnerCompleted = 0, intermediateCompleted = 0, advancedCompleted = 0;
+  let beginnerTotal = 5, intermediateTotal = 5, advancedTotal = 5;
+  
+  // Use backend data
+  if (backendData.modules) {
+    Object.values(backendData.modules).forEach(moduleProgress => {
+      if (moduleProgress.completed) {
+        totalCompleted++;
+        const moduleInfo = allModules.find(m => m.id === moduleProgress.module_id);
+        if (moduleInfo) {
+          if (moduleInfo.level === 'beginner') beginnerCompleted++;
+          else if (moduleInfo.level === 'intermediate') intermediateCompleted++;
+          else if (moduleInfo.level === 'advanced') advancedCompleted++;
+        }
+      }
+      totalTime += moduleProgress.time_spent || 0;
+    });
+  }
+  
+  updateOverallMetrics(totalCompleted, allModules.length, totalTime, beginnerCompleted, intermediateCompleted, advancedCompleted);
+}
+
+// Update UI from localStorage data
+function updateUIFromLocalStorage(data) {
+  const allModules = [
+    // Beginner modules
+    { id: 'financial-basics', totalCheckpoints: 6, level: 'beginner' },
+    { id: 'asset-classes', totalCheckpoints: 5, level: 'beginner' },
+    { id: 'trading-concepts', totalCheckpoints: 6, level: 'beginner' },
+    { id: 'risk-management', totalCheckpoints: 7, level: 'beginner' },
+    { id: 'first-portfolio', totalCheckpoints: 8, level: 'beginner' },
+    // Intermediate modules
+    { id: 'technical-analysis', totalCheckpoints: 8, level: 'intermediate' },
+    { id: 'fundamental-analysis', totalCheckpoints: 7, level: 'intermediate' },
+    { id: 'market-psychology', totalCheckpoints: 6, level: 'intermediate' },
+    { id: 'sector-analysis', totalCheckpoints: 7, level: 'intermediate' },
+    { id: 'advanced-strategies', totalCheckpoints: 8, level: 'intermediate' },
+    // Advanced modules
+    { id: 'options-derivatives', totalCheckpoints: 9, level: 'advanced' },
+    { id: 'macro-economics', totalCheckpoints: 8, level: 'advanced' },
+    { id: 'ai-quant-strategies', totalCheckpoints: 10, level: 'advanced' },
+    { id: 'portfolio-management', totalCheckpoints: 9, level: 'advanced' },
+    { id: 'hft', totalCheckpoints: 10, level: 'advanced' }
+  ];
+  
+  let totalCompleted = 0;
+  let totalTime = 0;
+  let beginnerCompleted = 0, intermediateCompleted = 0, advancedCompleted = 0;
+  let beginnerTotal = 5, intermediateTotal = 5, advancedTotal = 5;
+  
+  allModules.forEach(module => {
+    if (data[module.id]) {
+      const progress = data[module.id];
+      if (progress.completed) {
+        totalCompleted++;
+        if (module.level === 'beginner') beginnerCompleted++;
+        else if (module.level === 'intermediate') intermediateCompleted++;
+        else if (module.level === 'advanced') advancedCompleted++;
+      }
+      if (progress.timeSpent) {
+        totalTime += progress.timeSpent;
+      }
+    }
+  });
+  
+  updateOverallMetrics(totalCompleted, allModules.length, totalTime, beginnerCompleted, intermediateCompleted, advancedCompleted);
+}
+
+// Update overall metrics
+function updateOverallMetrics(totalCompleted, totalModules, totalTime, beginnerCompleted, intermediateCompleted, advancedCompleted) {
+  const overallPercentage = Math.round((totalCompleted / totalModules) * 100);
+  document.getElementById('overallProgress').textContent = overallPercentage + '%';
+  document.getElementById('overallProgressFill').style.width = overallPercentage + '%';
+  document.getElementById('completedModules').textContent = totalCompleted;
+  
+  // Format time
+  if (totalTime < 60) {
+    document.getElementById('totalTime').textContent = totalTime + 'm';
+  } else {
+    const hours = Math.floor(totalTime / 60);
+    const minutes = totalTime % 60;
+    document.getElementById('totalTime').textContent = hours + 'h ' + minutes + 'm';
+  }
+  
+  // Determine current level
+  let currentLevel = 'Beginner';
+  if (beginnerCompleted >= 5) {
+    if (intermediateCompleted >= 5) {
+      currentLevel = 'Advanced';
+    } else {
+      currentLevel = 'Intermediate';
+    }
+  }
+  document.getElementById('currentLevel').textContent = currentLevel;
+  
+  // Update level progress bars
+  updateLevelProgress('beginnerLevelProgress', beginnerCompleted, 5);
+  updateLevelProgress('intermediateLevelProgress', intermediateCompleted, 5);
+  updateLevelProgress('advancedLevelProgress', advancedCompleted, 5);
+}
+
+// Update level progress bar
+function updateLevelProgress(elementId, completed, total) {
+  const element = document.getElementById(elementId);
+  if (element) {
+    const percentage = Math.round((completed / total) * 100);
+    const progressFill = element.querySelector('.progress-fill');
+    const progressText = element.querySelector('.progress-text');
+    
+    if (progressFill) progressFill.style.width = percentage + '%';
+    if (progressText) progressText.textContent = percentage + '% Complete';
+  }
+}
+
+// Update simulator statistics
+async function updateSimulatorStats() {
+  try {
+    // Try backend first
+    if (window.alphaAPI && window.alphaAPI.isAuthenticated()) {
+      try {
+        const simulatorState = await window.alphaAPI.getSimulatorState();
+        updateSimulatorUI(simulatorState);
+        return;
+      } catch (error) {
+        console.log('Backend simulator not available, using localStorage');
+      }
+    }
+    
+    // Fallback to localStorage
+    const simulatorData = localStorage.getItem('tradingSimulator_state');
+    if (simulatorData) {
+      const data = JSON.parse(simulatorData);
+      updateSimulatorUI({
+        level: data.level,
+        trade_count: data.tradeCount,
+        pnl: data.totalPnl || 0
+      });
+    } else {
+      updateSimulatorUI({
+        level: 'Not Started',
+        trade_count: 0,
+        pnl: 0
+      });
+    }
+  } catch (error) {
+    console.error('Error updating simulator stats:', error);
+  }
+}
+
+// Update simulator UI
+function updateSimulatorUI(data) {
+  const levelEl = document.getElementById('simulatorLevel');
+  const tradesEl = document.getElementById('simulatorTrades');
+  const pnlEl = document.getElementById('simulatorPnL');
+  
+  if (levelEl) levelEl.textContent = data.level || 'Not Started';
+  if (tradesEl) tradesEl.textContent = data.trade_count || 0;
+  if (pnlEl) {
+    pnlEl.textContent = AlphaUtils ? AlphaUtils.formatCurrency(data.pnl || 0) : `$${(data.pnl || 0).toFixed(2)}`;
+    pnlEl.style.color = (data.pnl || 0) >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+}
+
+// Open trading simulator
+function openSimulator() {
+  window.location.href = 'trading-simulator.html';
+}
+
+// Sync data with backend
+async function syncWithBackend() {
+  if (!window.alphaAPI || !window.alphaAPI.isAuthenticated()) {
+    if (window.AlphaUtils) {
+      AlphaUtils.showNotification('Please login to sync with backend', 'info');
+    } else {
+      alert('Please login to sync with backend');
+    }
+    return;
+  }
+
+  try {
+    if (window.AlphaUtils) {
+      await AlphaUtils.syncProgressWithBackend();
+      await AlphaUtils.syncSimulatorWithBackend();
+    }
+    await loadModuleProgress(); // Reload UI with fresh data
+  } catch (error) {
+    if (window.AlphaUtils) {
+      AlphaUtils.handleAPIError(error, 'during sync');
+    } else {
+      console.error('Sync error:', error);
+      alert('Sync failed: ' + error.message);
+    }
+  }
+}
+
+// Initialize user session
+async function initializeUser() {
+  if (!window.alphaAPI) {
+    console.log('API client not loaded');
+    return;
+  }
+
+  // Auto-login if user exists in localStorage
+  const storedUser = localStorage.getItem('alpha_user');
+  if (storedUser && !window.alphaAPI.isAuthenticated()) {
+    try {
+      const user = JSON.parse(storedUser);
+      await window.alphaAPI.login(user.username);
+      console.log('✅ Auto-logged in user:', user.username);
+    } catch (error) {
+      console.warn('Auto-login failed:', error.message);
+    }
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', async () => {
+  await initializeUser();
+  await loadModuleProgress();
+  
+  // Add sync button if backend is available
+  if (window.alphaAPI) {
+    try {
+      await window.alphaAPI.healthCheck();
+      
+      // Add sync button to navigation
+      const navCta = document.querySelector('.nav-cta');
+      if (navCta) {
+        const syncBtn = document.createElement('button');
+        syncBtn.textContent = 'SYNC';
+        syncBtn.className = 'nav-cta';
+        syncBtn.style.marginLeft = '10px';
+        syncBtn.onclick = syncWithBackend;
+        navCta.parentNode.insertBefore(syncBtn, navCta.nextSibling);
+      }
+    } catch (error) {
+      console.log('Backend not available, running in offline mode');
+    }
+  }
+});
+
+// Finance Chatbot
+class FinanceChatbot {
+  constructor() {
+    this.financeKeywords = [
+      'stock', 'stocks', 'share', 'shares', 'market', 'markets', 'trading', 'trade',
+      'invest', 'investment', 'investing', 'portfolio', 'dividend', 'finance', 'financial',
+      'money', 'price', 'prices', 'bull', 'bear', 'bullish', 'bearish', 'volatility',
+      'crypto', 'bitcoin', 'ethereum', 'forex', 'currency', 'commodity', 'commodities',
+      'bond', 'bonds', 'mutual fund', 'etf', 'index', 'indices', 'nasdaq', 'dow',
+      'sp500', 'earnings', 'revenue', 'profit', 'loss', 'capital', 'asset', 'assets',
+      'risk', 'return', 'roi', 'analysis', 'technical', 'fundamental', 'chart', 'trend',
+      'support', 'resistance', 'buy', 'sell', 'hold', 'long', 'short', 'leverage',
+      'margin', 'option', 'options', 'future', 'futures', 'hedge', 'arbitrage', 'broker',
+      'exchange', 'sec', 'regulation', 'economy', 'inflation', 'interest', 'rate',
+      'gdp', 'recession', 'growth', 'valuation', 'pe ratio', 'market cap', 'liquidity'
+    ];
+    
+    this.init();
+  }
+  
+  init() {
+    this.chatInput = document.getElementById('chatInput');
+    this.sendBtn = document.getElementById('sendBtn');
+    this.chatMessages = document.getElementById('chatMessages');
+    this.chatWarning = document.getElementById('chatWarning');
+    
+    if (this.sendBtn && this.chatInput) {
+      this.sendBtn.addEventListener('click', () => this.sendMessage());
+      this.chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.sendMessage();
+      });
+    }
+  }
+  
+  isFinanceRelated(message) {
+    const lowerMessage = message.toLowerCase();
+    return this.financeKeywords.some(keyword => lowerMessage.includes(keyword));
+  }
+  
+  generateFinanceResponse(message) {
+    const lowerMessage = message.toLowerCase();
+    
+    // Stock market related
+    if (lowerMessage.includes('stock') || lowerMessage.includes('share')) {
+      return "Stocks represent ownership in a company. When you buy a stock, you become a shareholder. Stock prices fluctuate based on company performance, market conditions, and investor sentiment. Always research companies before investing and consider diversifying your portfolio.";
+    }
+    
+    // Trading related
+    if (lowerMessage.includes('trade') || lowerMessage.includes('trading')) {
+      return "Trading involves buying and selling financial instruments. Key principles include: risk management, technical analysis, fundamental analysis, and having a clear strategy. Remember that trading involves risk of loss and isn't suitable for everyone.";
+    }
+    
+    // Investment related
+    if (lowerMessage.includes('invest') || lowerMessage.includes('investment')) {
+      return "Investing is putting money to work to earn returns. Common investment types include stocks, bonds, ETFs, and mutual funds. Key factors to consider: risk tolerance, time horizon, diversification, and your financial goals.";
+    }
+    
+    // Market analysis
+    if (lowerMessage.includes('analysis') || lowerMessage.includes('chart') || lowerMessage.includes('trend')) {
+      return "Market analysis includes technical analysis (charts, patterns, indicators) and fundamental analysis (company financials, industry trends). Both approaches help in making informed investment decisions.";
+    }
+    
+    // Risk management
+    if (lowerMessage.includes('risk') || lowerMessage.includes('loss')) {
+      return "Risk management is crucial in finance. Key strategies include: diversification, position sizing, stop-loss orders, and never investing more than you can afford to lose. Remember that higher returns typically come with higher risk.";
+    }
+    
+    // General finance advice
+    return "That's a great finance question! Remember these key principles: 1) Always do your research before investing, 2) Diversify your portfolio to spread risk, 3) Have clear financial goals, 4) Understand your risk tolerance, 5) Consider consulting with a financial advisor for personalized advice.";
+  }
+  
+  sendMessage() {
+    const message = this.chatInput.value.trim();
+    if (!message) return;
+    
+    // Check if message is finance-related
+    if (!this.isFinanceRelated(message)) {
+      this.showWarning();
+      this.addBotMessage("❌ I can only answer finance and stock-related questions. Please ask about topics like stocks, trading, investments, market analysis, or financial concepts.");
+      this.chatInput.value = '';
+      return;
+    }
+    
+    // Hide warning if shown
+    this.hideWarning();
+    
+    // Add user message
+    this.addUserMessage(message);
+    
+    // Generate and add bot response
+    const response = this.generateFinanceResponse(message);
+    setTimeout(() => {
+      this.addBotMessage(response);
+    }, 500);
+    
+    // Clear input
+    this.chatInput.value = '';
+  }
+  
+  addUserMessage(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message user-message';
+    messageDiv.innerHTML = `
+      <div class="message-avatar">👤</div>
+      <div class="message-content">
+        <p>${message}</p>
+      </div>
+    `;
+    this.chatMessages.appendChild(messageDiv);
+    this.scrollToBottom();
+  }
+  
+  addBotMessage(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message bot-message';
+    messageDiv.innerHTML = `
+      <div class="message-avatar">🤖</div>
+      <div class="message-content">
+        <p>${message}</p>
+      </div>
+    `;
+    this.chatMessages.appendChild(messageDiv);
+    this.scrollToBottom();
+  }
+  
+  showWarning() {
+    if (this.chatWarning) {
+      this.chatWarning.style.display = 'block';
+      setTimeout(() => {
+        this.hideWarning();
+      }, 3000);
+    }
+  }
+  
+  hideWarning() {
+    if (this.chatWarning) {
+      this.chatWarning.style.display = 'none';
+    }
+  }
+  
+  scrollToBottom() {
+    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+  }
+}
+
+// Initialize chatbot when page loads
+document.addEventListener('DOMContentLoaded', () => {
+  new FinanceChatbot();
+});
+
+</script>
+
+</body>
+</html>

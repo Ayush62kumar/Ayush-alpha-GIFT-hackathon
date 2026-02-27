@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>News API Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #020b12; color: #e8f4f0; }
+        .test { margin: 10px 0; padding: 10px; background: #061520; border-radius: 8px; }
+        .success { border-left: 4px solid #00dc82; }
+        .error { border-left: 4px solid #ff4a6e; }
+        button { background: #00dc82; color: #020b12; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .news-item { background: #061520; border: 1px solid #00dc82; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .news-title { font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #00dc82; }
+        .news-summary { font-size: 14px; margin-bottom: 8px; color: #e8f4f0; }
+        .news-meta { font-size: 12px; color: #888; }
+        .sentiment { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-bottom: 8px; display: inline-block; }
+        .bullish { background: rgba(0, 220, 130, 0.2); color: #00dc82; }
+        .bearish { background: rgba(255, 74, 110, 0.2); color: #ff4a6e; }
+        .neutral { background: rgba(245, 166, 35, 0.2); color: #f5a623; }
+    </style>
+</head>
+<body>
+    <h1>News API Test</h1>
+    <div id="results"></div>
+    
+    <button onclick="testBusinessNews()">Test Business News</button>
+    <button onclick="testFinancialNews()">Test Financial News</button>
+    <button onclick="testMarketNews()">Test Market News</button>
+    <button onclick="testAllNews()">Test All Sources</button>
+    
+    <div id="newsContainer"></div>
+    
+    <script>
+        const NEWS_API_KEY = '627392effe2e41dc8858ff47ce370635';
+        const NEWS_API_BASE_URL = 'https://newsapi.org/v2';
+        const FINNHUB_API_KEY = 'd6g83gpr01qt4931t7ogd6g83gpr01qt4931t7p0';
+        const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
+        
+        const results = document.getElementById('results');
+        const newsContainer = document.getElementById('newsContainer');
+        
+        function addResult(message, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        function analyzeSentiment(text) {
+            const positiveWords = ['gain', 'rise', 'growth', 'profit', 'bullish', 'surge', 'rally', 'up', 'increase', 'strong'];
+            const negativeWords = ['loss', 'fall', 'decline', 'bearish', 'drop', 'crash', 'down', 'decrease', 'weak', 'risk'];
+            
+            const lowerText = text.toLowerCase();
+            let positiveScore = 0;
+            let negativeScore = 0;
+            
+            positiveWords.forEach(word => {
+                if (lowerText.includes(word)) positiveScore++;
+            });
+            
+            negativeWords.forEach(word => {
+                if (lowerText.includes(word)) negativeScore++;
+            });
+            
+            if (positiveScore > negativeScore) return 'bullish';
+            if (negativeScore > positiveScore) return 'bearish';
+            return 'neutral';
+        }
+        
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + ' minutes ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + ' hours ago';
+            return Math.floor(seconds / 86400) + ' days ago';
+        }
+        
+        function displayNews(articles, source = 'News API') {
+            newsContainer.innerHTML = '';
+            
+            articles.slice(0, 5).forEach(article => {
+                const newsItem = document.createElement('div');
+                newsItem.className = 'news-item';
+                
+                const sentiment = analyzeSentiment(article.title + ' ' + (article.description || ''));
+                
+                newsItem.innerHTML = `
+                    <div class="sentiment ${sentiment}">${sentiment.toUpperCase()}</div>
+                    <div class="news-title">${article.title}</div>
+                    <div class="news-summary">${article.description || 'No summary available'}</div>
+                    <div class="news-meta">${article.source.name} • ${getTimeAgo(article.publishedAt)} • ${source}</div>
+                `;
+                
+                newsItem.addEventListener('click', () => {
+                    if (article.url) {
+                        window.open(article.url, '_blank');
+                    }
+                });
+                
+                newsContainer.appendChild(newsItem);
+            });
+        }
+        
+        async function testBusinessNews() {
+            try {
+                addResult('🔄 Testing Business News API...', 'success');
+                
+                const response = await fetch(`${NEWS_API_BASE_URL}/top-headlines?country=us&category=business&apiKey=${NEWS_API_KEY}`);
+                const data = await response.json();
+                
+                if (data.status === 'ok' && data.articles) {
+                    addResult(`✅ Business News: ${data.articles.length} articles retrieved`, 'success');
+                    displayNews(data.articles, 'News API - Business');
+                } else {
+                    addResult(`❌ Business News Failed: ${data.message || 'Unknown error'}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Business News Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testFinancialNews() {
+            try {
+                addResult('🔄 Testing Financial News...', 'success');
+                
+                const response = await fetch(`${NEWS_API_BASE_URL}/everything?q=finance OR stocks OR trading OR market&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`);
+                const data = await response.json();
+                
+                if (data.status === 'ok' && data.articles) {
+                    addResult(`✅ Financial News: ${data.articles.length} articles retrieved`, 'success');
+                    displayNews(data.articles, 'News API - Financial');
+                } else {
+                    addResult(`❌ Financial News Failed: ${data.message || 'Unknown error'}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Financial News Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testMarketNews() {
+            try {
+                addResult('🔄 Testing Market News...', 'success');
+                
+                const response = await fetch(`${NEWS_API_BASE_URL}/everything?q=stock market OR wall street OR nasdaq OR "S&P 500"&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`);
+                const data = await response.json();
+                
+                if (data.status === 'ok' && data.articles) {
+                    addResult(`✅ Market News: ${data.articles.length} articles retrieved`, 'success');
+                    displayNews(data.articles, 'News API - Market');
+                } else {
+                    addResult(`❌ Market News Failed: ${data.message || 'Unknown error'}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Market News Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAllNews() {
+            try {
+                addResult('🔄 Testing All News Sources...', 'success');
+                
+                let allArticles = [];
+                
+                // Test News API
+                try {
+                    const newsApiResponse = await fetch(`${NEWS_API_BASE_URL}/top-headlines?country=us&category=business&apiKey=${NEWS_API_KEY}`);
+                    const newsApiData = await newsApiResponse.json();
+                    
+                    if (newsApiData.status === 'ok' && newsApiData.articles) {
+                        const newsApiArticles = newsApiData.articles.map(article => ({
+                            ...article,
+                            source: article.source
+                        }));
+                        allArticles = allArticles.concat(newsApiArticles);
+                        addResult(`✅ News API: ${newsApiArticles.length} articles`, 'success');
+                    }
+                } catch (newsApiError) {
+                    addResult(`⚠️ News API Failed: ${newsApiError.message}`, 'error');
+                }
+                
+                // Test Finnhub
+                try {
+                    const finnhubResponse = await fetch(`${FINNHUB_BASE_URL}/news?category=general&token=${FINNHUB_API_KEY}`);
+                    const finnhubData = await finnhubResponse.json();
+                    
+                    if (finnhubData && finnhubData.length > 0) {
+                        const finnhubArticles = finnhubData.map(article => ({
+                            title: article.headline,
+                            description: article.summary,
+                            source: { name: article.source },
+                            url: article.url,
+                            publishedAt: new Date(article.datetime * 1000).toISOString()
+                        }));
+                        allArticles = allArticles.concat(finnhubArticles);
+                        addResult(`✅ Finnhub: ${finnhubArticles.length} articles`, 'success');
+                    }
+                } catch (finnhubError) {
+                    addResult(`⚠️ Finnhub Failed: ${finnhubError.message}`, 'error');
+                }
+                
+                // Sort by date and display
+                allArticles.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+                displayNews(allArticles, 'All Sources');
+                addResult(`🎯 Total: ${allArticles.length} articles from all sources`, 'success');
+                
+            } catch (error) {
+                addResult(`❌ Combined News Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = () => {
+            addResult('🚀 News API Test Page Loaded', 'success');
+            addResult(`📡 Using News API Key: ${NEWS_API_KEY.substring(0, 10)}...`, 'success');
+            testBusinessNews();
+        };
+    </script>
+</body>
+</html>

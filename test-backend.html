@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backend Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #020b12; color: #e8f4f0; }
+        .test { margin: 10px 0; padding: 10px; background: #061520; border-radius: 8px; }
+        .success { border-left: 4px solid #00dc82; }
+        .error { border-left: 4px solid #ff4a6e; }
+        button { background: #00dc82; color: #020b12; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>ALPHA Backend Test</h1>
+    <div id="results"></div>
+    
+    <button onclick="testHealth()">Test Health</button>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testModules()">Test Modules</button>
+    <button onclick="testProgress()">Test Progress</button>
+    
+    <script src="api-client.js"></script>
+    <script>
+        const results = document.getElementById('results');
+        
+        function addResult(message, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        async function testHealth() {
+            try {
+                const response = await alphaAPI.healthCheck();
+                addResult(`✅ Health Check: ${response.message} (v${response.version})`, 'success');
+            } catch (error) {
+                addResult(`❌ Health Check Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testLogin() {
+            try {
+                const response = await alphaAPI.login('testuser');
+                addResult(`✅ Login Success: User ${response.user_id}`, 'success');
+            } catch (error) {
+                addResult(`❌ Login Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testModules() {
+            try {
+                const response = await alphaAPI.getAllModules();
+                const moduleCount = Object.keys(response.modules).length;
+                addResult(`✅ Modules: ${moduleCount} modules loaded`, 'success');
+            } catch (error) {
+                addResult(`❌ Modules Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testProgress() {
+            try {
+                if (!alphaAPI.isAuthenticated()) {
+                    addResult(`⚠️ Progress: Need to login first`, 'error');
+                    return;
+                }
+                const response = await alphaAPI.getUserProgress();
+                addResult(`✅ Progress: User data loaded`, 'success');
+            } catch (error) {
+                addResult(`❌ Progress Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = () => {
+            addResult('🚀 Backend Test Page Loaded', 'success');
+        };
+    </script>
+</body>
+</html>

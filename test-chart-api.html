@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chart API Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #020b12; color: #e8f4f0; }
+        .test { margin: 10px 0; padding: 10px; background: #061520; border-radius: 8px; }
+        .success { border-left: 4px solid #00dc82; }
+        .error { border-left: 4px solid #ff4a6e; }
+        button { background: #00dc82; color: #020b12; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .chart-container { background: #061520; border: 1px solid #00dc82; border-radius: 8px; height: 400px; margin: 20px 0; position: relative; }
+        canvas { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <h1>Chart API Test</h1>
+    <div id="results"></div>
+    
+    <button onclick="testChart('AAPL', '1D')">Test AAPL 1D</button>
+    <button onclick="testChart('AAPL', '1M')">Test AAPL 1M</button>
+    <button onclick="testChart('TSLA', '1M')">Test TSLA 1M</button>
+    <button onclick="testChart('GOOGL', '1Y')">Test GOOGL 1Y</button>
+    
+    <div class="chart-container">
+        <canvas id="testChart"></canvas>
+    </div>
+    
+    <script>
+        const FINNHUB_API_KEY = 'd6g83gpr01qt4931t7ogd6g83gpr01qt4931t7p0';
+        const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
+        
+        const results = document.getElementById('results');
+        
+        function addResult(message, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        async function getStockQuote(symbol) {
+            try {
+                const response = await fetch(`${FINNHUB_BASE_URL}/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error(`Error fetching ${symbol}:`, error);
+                return null;
+            }
+        }
+        
+        function generateSimulatedCandleData(currentPrice, timeframe) {
+            let dataPoints = 30;
+            
+            switch(timeframe) {
+                case '1D': dataPoints = 78; break;
+                case '1W': dataPoints = 7 * 24; break;
+                case '1M': dataPoints = 30; break;
+                case '3M': dataPoints = 90; break;
+                case '1Y': dataPoints = 52; break;
+            }
+            
+            const data = {
+                s: 'ok',
+                c: [], h: [], l: [], o: [], t: []
+            };
+            
+            let basePrice = currentPrice * 0.9;
+            const now = Math.floor(Date.now() / 1000);
+            const timeInterval = timeframe === '1Y' ? 7 * 24 * 60 * 60 :
+                                 timeframe === '1D' ? 5 * 60 :
+                                 timeframe === '1W' ? 60 * 60 :
+                                 24 * 60 * 60;
+            
+            for (let i = 0; i < dataPoints; i++) {
+                const timestamp = now - (dataPoints - i) * timeInterval;
+                
+                const trend = (i / dataPoints) * 0.15;
+                const volatility = 0.03;
+                const randomWalk = (Math.random() - 0.5) * 2 * volatility;
+                const priceChange = trend + randomWalk;
+                
+                const dayOpen = basePrice * (1 + priceChange);
+                const dayClose = dayOpen * (1 + (Math.random() - 0.4) * volatility);
+                const dayHigh = Math.max(dayOpen, dayClose) * (1 + Math.random() * volatility * 0.5);
+                const dayLow = Math.min(dayOpen, dayClose) * (1 - Math.random() * volatility * 0.5);
+                
+                data.c.push(dayClose);
+                data.h.push(dayHigh);
+                data.l.push(dayLow);
+                data.o.push(dayOpen);
+                data.t.push(timestamp);
+                
+                basePrice = dayClose;
+            }
+            
+            data.c[data.c.length - 1] = currentPrice;
+            data.h[data.h.length - 1] = Math.max(data.h[data.h.length - 1], currentPrice);
+            data.l[data.l.length - 1] = Math.min(data.l[data.l.length - 1], currentPrice);
+            
+            return data;
+        }
+        
+        function drawChart(data) {
+            const canvas = document.getElementById('testChart');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width = canvas.offsetWidth;
+            const height = canvas.height = canvas.offsetHeight;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            const prices = data.c;
+            const highs = data.h;
+            const lows = data.l;
+            
+            if (prices.length === 0) return;
+            
+            const minPrice = Math.min(...lows);
+            const maxPrice = Math.max(...highs);
+            const priceRange = maxPrice - minPrice;
+            
+            const padding = 40;
+            const chartWidth = width - (padding * 2);
+            const chartHeight = height - (padding * 2);
+            
+            // Draw grid
+            ctx.strokeStyle = 'rgba(0, 220, 130, 0.1)';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (chartHeight / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+                
+                const price = maxPrice - (priceRange / 5) * i;
+                ctx.fillStyle = '#e8f4f0';
+                ctx.font = '10px monospace';
+                ctx.textAlign = 'right';
+                ctx.fillText(`$${price.toFixed(2)}`, padding - 10, y + 3);
+            }
+            
+            // Draw price line
+            ctx.strokeStyle = '#00dc82';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            prices.forEach((price, i) => {
+                const x = padding + (chartWidth / (prices.length - 1)) * i;
+                const y = padding + ((maxPrice - price) / priceRange) * chartHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+            
+            // Draw gradient fill
+            const gradient = ctx.createLinearGradient(0, padding, 0, height - padding);
+            gradient.addColorStop(0, 'rgba(0, 220, 130, 0.3)');
+            gradient.addColorStop(1, 'rgba(0, 220, 130, 0.0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            
+            prices.forEach((price, i) => {
+                const x = padding + (chartWidth / (prices.length - 1)) * i;
+                const y = padding + ((maxPrice - price) / priceRange) * chartHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            
+            ctx.lineTo(width - padding, height - padding);
+            ctx.lineTo(padding, height - padding);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw current price
+            const currentPrice = prices[prices.length - 1];
+            const lastY = padding + ((maxPrice - currentPrice) / priceRange) * chartHeight;
+            
+            ctx.fillStyle = '#00dc82';
+            ctx.beginPath();
+            ctx.arc(width - padding, lastY, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#00dc82';
+            ctx.font = 'bold 12px monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText(`$${currentPrice.toFixed(2)}`, width - padding + 10, lastY + 4);
+        }
+        
+        async function testChart(symbol, timeframe) {
+            try {
+                addResult(`🔄 Loading chart for ${symbol} (${timeframe})...`, 'success');
+                
+                const quoteData = await getStockQuote(symbol);
+                
+                if (quoteData && quoteData.c) {
+                    const simulatedData = generateSimulatedCandleData(quoteData.c, timeframe);
+                    drawChart(simulatedData);
+                    addResult(`✅ Chart loaded: ${symbol} at $${quoteData.c} (${timeframe})`, 'success');
+                } else {
+                    addResult(`❌ Failed to get quote data for ${symbol}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Chart test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = () => {
+            addResult('🚀 Chart API Test Page Loaded', 'success');
+            testChart('AAPL', '1M');
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI & Quant Strategies - Learning Module | ALPHA</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020b12;
+    --surface: #061520;
+    --border: rgba(0, 220, 130, 0.15);
+    --green: #00dc82;
+    --green-dim: rgba(0, 220, 130, 0.08);
+    --amber: #f5a623;
+    --red: #ff4a6e;
+    --text: #e8f4f0;
+    --muted: rgba(232, 244, 240, 0.45);
+    --mono: 'DM Mono', monospace;
+    --yellow: #FFE600;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 12px; height: 12px; background: var(--green); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: transform 0.15s ease; mix-blend-mode: screen; }
+  .cursor-ring { width: 36px; height: 36px; border: 1px solid rgba(0,220,130,0.4); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); opacity:0.6; pointer-events:none; z-index:1000; }
+
+  /* NAV */
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:24px 60px; background:linear-gradient(to bottom,rgba(2,11,18,0.95),transparent); backdrop-filter:blur(2px); }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:var(--text); display:flex; align-items:center; gap:10px; cursor:none; }
+  .logo-dot { width:8px; height:8px; background:var(--green); border-radius:50%; box-shadow:0 0 16px var(--green); animation:pulse 2s infinite; }
+  .nav-links { display:flex; gap:40px; list-style:none; }
+  .nav-links a { font-size:12px; font-weight:300; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.3s; }
+  .nav-links a:hover { color:var(--green); }
+  .nav-cta { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:10px 24px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; transition:all 0.3s; }
+  .nav-cta:hover { background:var(--green); color:var(--bg); }
+
+  /* Module Content */
+  .module-container { padding:120px 60px 80px; max-width:1200px; margin:0 auto; }
+  .module-header { margin-bottom:60px; }
+  .module-breadcrumb { font-family:var(--mono); font-size:11px; color:var(--muted); margin-bottom:20px; }
+  .module-breadcrumb a { color:var(--green); text-decoration:none; }
+  .module-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,6vw,80px); letter-spacing:2px; line-height:1; margin-bottom:20px; }
+  .module-subtitle { font-size:16px; font-weight:300; color:var(--muted); line-height:1.8; max-width:600px; }
+  .module-meta { display:flex; gap:30px; margin-top:30px; }
+  .meta-item { display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .meta-icon { font-size:16px; }
+
+  /* Progress Bar */
+  .progress-section { background:var(--surface); border:1px solid var(--border); padding:30px; margin-bottom:40px; border-radius:12px; }
+  .progress-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .progress-title { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; }
+  .progress-percentage { font-family:var(--mono); font-size:18px; color:var(--green); }
+  .progress-bar { height:8px; background:rgba(0,220,130,0.1); border-radius:4px; overflow:hidden; margin-bottom:20px; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--green),var(--amber)); border-radius:4px; transition:width 0.5s ease; }
+  .progress-stats { display:flex; gap:40px; font-family:var(--mono); font-size:12px; color:var(--muted); }
+
+  /* Content Sections */
+  .content-section { background:var(--surface); border:1px solid var(--border); padding:40px; margin-bottom:30px; border-radius:12px; position:relative; }
+  .section-number { position:absolute; top:-15px; left:40px; background:var(--green); color:var(--bg); font-family:'Bebas Neue',sans-serif; font-size:20px; padding:5px 15px; border-radius:20px; }
+  .section-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; margin-bottom:20px; margin-top:10px; }
+  .section-content { font-size:15px; line-height:1.8; color:var(--muted); }
+  .section-content h3 { font-family:'DM Serif Display',serif; font-size:20px; color:var(--text); margin:25px 0 15px; }
+  .section-content p { margin-bottom:15px; }
+  .section-content ul { margin:15px 0 15px 30px; }
+  .section-content li { margin-bottom:8px; }
+  .section-content .highlight { background:var(--green-dim); padding:2px 6px; border-radius:4px; color:var(--green); font-weight:500; }
+  .section-content .key-term { font-family:var(--mono); font-size:14px; background:rgba(245,166,35,0.1); padding:2px 8px; border-radius:4px; color:var(--amber); }
+
+  /* Interactive Elements */
+  .checkpoint-box { background:rgba(0,220,130,0.05); border:1px solid var(--border); padding:20px; margin:30px 0; border-radius:8px; display:flex; align-items:center; gap:20px; }
+  .checkpoint-checkbox { width:24px; height:24px; border:2px solid var(--green); border-radius:6px; cursor:none; display:flex; align-items:center; justify-content:center; transition:all 0.3s; }
+  .checkpoint-checkbox:hover { background:var(--green-dim); }
+  .checkpoint-checkbox.checked { background:var(--green); color:var(--bg); }
+  .checkpoint-content { flex:1; }
+  .checkpoint-title { font-family:var(--mono); font-size:14px; font-weight:600; margin-bottom:5px; }
+  .checkpoint-desc { font-size:12px; color:var(--muted); }
+
+  /* Algorithm Examples */
+  .algo-box { background:rgba(2,11,18,0.5); border:1px solid var(--border); padding:20px; margin:20px 0; border-radius:8px; font-family:var(--mono); font-size:12px; }
+  .algo-header { color:var(--green); margin-bottom:10px; }
+  .algo-code { background:rgba(0,220,130,0.05); padding:15px; border-radius:4px; border-left:3px solid var(--green); }
+
+  /* Strategy Cards */
+  .strategy-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:15px; margin:20px 0; }
+  .strategy-card { background:rgba(2,11,18,0.5); border:1px solid var(--border); padding:20px; border-radius:8px; }
+  .strategy-name { font-family:var(--mono); font-size:14px; font-weight:600; color:var(--green); margin-bottom:10px; }
+  .strategy-desc { font-size:12px; color:var(--muted); margin-bottom:15px; line-height:1.6; }
+  .strategy-metrics { display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; }
+  .metric { text-align:center; }
+  .metric-value { color:var(--text); font-weight:600; }
+  .metric-label { color:var(--muted); }
+
+  /* ML Pipeline */
+  .pipeline-steps { display:flex; justify-content:space-between; margin:30px 0; position:relative; }
+  .pipeline-step { background:var(--surface); border:1px solid var(--border); padding:15px; border-radius:8px; text-align:center; flex:1; margin:0 5px; position:relative; z-index:2; }
+  .pipeline-step::after { content:'→'; position:absolute; right:-15px; top:50%; transform:translateY(-50%); color:var(--green); font-size:18px; z-index:1; }
+  .pipeline-step:last-child::after { display:none; }
+  .step-number { width:30px; height:30px; background:var(--green); color:var(--bg); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 10px; font-weight:600; }
+  .step-name { font-family:var(--mono); font-size:11px; font-weight:600; color:var(--text); }
+
+  /* Action Buttons */
+  .action-buttons { display:flex; gap:20px; margin-top:40px; }
+  .btn-primary { font-family:var(--mono); font-size:14px; letter-spacing:1px; padding:14px 32px; background:var(--green); color:var(--bg); border:none; cursor:none; font-weight:600; transition:all 0.3s; border-radius:8px; }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,220,130,0.3); }
+  .btn-secondary { font-family:var(--mono); font-size:14px; letter-spacing:1px; padding:14px 32px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; font-weight:600; transition:all 0.3s; border-radius:8px; }
+  .btn-secondary:hover { background:var(--green-dim); }
+
+  /* Animations */
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  @keyframes slideIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .content-section { animation:slideIn 0.6s ease forwards; }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="window.location.href='index.html'" style="cursor:none;">
+    <div class="logo-dot"></div>
+    ALPHA
+  </div>
+  <ul class="nav-links">
+    <li><a href="learning-module.html" class="active-nav">Learning Module</a></li>
+    <li><a href="alpha-rush.html">Alpha Rush</a></li>
+    <li><a href="market-analyzer.html">Market Analyzer</a></li>
+    <li><a href="portfolio-analyzer.html">Portfolio Analyzer</a></li>
+    <li><a href="news-intelligence.html">News Intelligence</a></li>
+  </ul>
+  <button class="nav-cta" onclick="window.location.href='learning-module.html'">BACK TO MODULES</button>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="module-container">
+  <div class="module-header">
+    <div class="module-breadcrumb">
+      <a href="learning-module.html">Learning Modules</a> → AI & Quant Strategies
+    </div>
+    <h1 class="module-title">AI & QUANT <em>STRATEGIES</em></h1>
+    <p class="module-subtitle">Master cutting-edge algorithmic trading strategies and machine learning applications in finance. Learn to build, test, and deploy quantitative trading systems powered by artificial intelligence.</p>
+    <div class="module-meta">
+      <div class="meta-item">
+        <span class="meta-icon">🤖</span>
+        <span>Expert Level</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-icon">⏱️</span>
+        <span>75 min read</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-icon">🎯</span>
+        <span>10 Lessons</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Section -->
+  <div class="progress-section">
+    <div class="progress-header">
+      <h3 class="progress-title">YOUR PROGRESS</h3>
+      <span class="progress-percentage" id="progressPercentage">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+    </div>
+    <div class="progress-stats">
+      <span>Completed: <span id="completedCount">0</span>/10 checkpoints</span>
+      <span>Time spent: <span id="timeSpent">0</span> minutes</span>
+      <span>Last accessed: Just now</span>
+    </div>
+  </div>
+
+  <!-- Section 1: Introduction to Quantitative Trading -->
+  <div class="content-section">
+    <div class="section-number">01</div>
+    <h2 class="section-title">Introduction to Quantitative Trading</h2>
+    <div class="section-content">
+      <p>Quantitative trading uses <span class="highlight">mathematical models and statistical analysis to identify trading opportunities</span>. It represents the intersection of finance, mathematics, and computer science.</p>
+      
+      <h3>What Makes Trading Quantitative?</h3>
+      <ul>
+        <li><span class="key-term">Systematic Approach</span> - Rules-based decision making</li>
+        <li><span class="key-term">Statistical Edge</span> - Proven mathematical advantage</li>
+        <li><span class="key-term">Automation</span> - Computer-driven execution</li>
+        <li><span class="key-term">Risk Management</span> - Quantified risk controls</li>
+      </ul>
+
+      <h3>Advantages of Quantitative Trading</h3>
+      <ul>
+        <li><span class="highlight">Emotion-Free Trading</span> - Removes human psychological biases</li>
+        <li><span class="highlight">Speed and Scale</span> - Process vast amounts of data instantly</li>
+        <li><span class="highlight">Backtesting</span> - Test strategies on historical data</li>
+        <li><span class="highlight">Consistency</span> - Apply same logic across all trades</li>
+      </ul>
+
+      <h3>Types of Quantitative Strategies</h3>
+      <ul>
+        <li><span class="key-term">Statistical Arbitrage</span> - Exploit price relationships</li>
+        <li><span class="key-term">Trend Following</span> - Capture momentum in markets</li>
+        <li><span class="key-term">Mean Reversion</span> - Bet on return to historical averages</li>
+        <li><span class="key-term">Machine Learning</span> - AI-driven pattern recognition</li>
+      </ul>
+
+      <h3>Required Skills</h3>
+      <ul>
+        <li>Programming (Python, R, C++)</li>
+        <li>Statistics and Probability</li>
+        <li>Financial Markets Knowledge</li>
+        <li>Data Analysis and Modeling</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 1)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Quant Trading Basics</div>
+          <div class="checkpoint-desc">Can you explain what makes trading quantitative?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Algorithmic Trading Infrastructure -->
+  <div class="content-section">
+    <div class="section-number">02</div>
+    <h2 class="section-title">Algorithmic Trading Infrastructure</h2>
+    <div class="section-content">
+      <p>Building robust trading infrastructure is <span class="highlight">critical for successful quantitative trading</span>. The technology stack determines speed, reliability, and scalability.</p>
+      
+      <h3>Core Components</h3>
+      <ul>
+        <li><span class="key-term">Data Feed Handler</span> - Process market data in real-time</li>
+        <li><span class="key-term">Strategy Engine</span> - Generate trading signals</li>
+        <li><span class="key-term">Order Management</span> - Handle order placement and tracking</li>
+        <li><span class="key-term">Risk Manager</span> - Monitor and control portfolio risk</li>
+        <li><span class="key-term">Execution Gateway</span> - Interface with brokers/exchanges</li>
+      </ul>
+
+      <h3>Data Management</h3>
+      <ul>
+        <li><span class="highlight">Tick Data</span> - Individual trade and quote data</li>
+        <li><span class="highlight">Bar Data</span> - OHLCV data at various timeframes</li>
+        <li><span class="highlight">Alternative Data</span> - Satellite, social media, news sentiment</li>
+        <li><span class="highlight">Fundamental Data</span> - Company financials, economic indicators</li>
+      </ul>
+
+      <h3>Technology Stack</h3>
+      <ul>
+        <li><span class="key-term">Programming Languages</span> - Python (prototyping), C++ (HFT), R (analysis)</li>
+        <li><span class="key-term">Databases</span> - Time-series databases (InfluxDB, KDB)</li>
+        <li><span class="key-term">Message Queues</span> - Kafka, RabbitMQ for real-time processing</li>
+        <li><span class="key-term">Cloud Services</span> - AWS, GCP for scalability</li>
+      </ul>
+
+      <h3>Latency Optimization</h3>
+      <ul>
+        <li>Co-location (placing servers near exchanges)</li>
+        <li>FPGA and GPU acceleration</li>
+        <li>Network protocol optimization</li>
+        <li>Memory management and cache optimization</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 2)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Trading Infrastructure</div>
+          <div class="checkpoint-desc">Can you identify the core components of algorithmic trading systems?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Statistical Arbitrage Strategies -->
+  <div class="content-section">
+    <div class="section-number">03</div>
+    <h2 class="section-title">Statistical Arbitrage Strategies</h2>
+    <div class="section-content">
+      <p>Statistical arbitrage exploits <span class="highlight">statistical mispricings between related securities</span>. These strategies rely on mean reversion and statistical relationships rather than fundamental analysis.</p>
+      
+      <h3>Pairs Trading</h3>
+      <ul>
+        <li><span class="key-term">Concept</span> - Trade two correlated securities when they diverge</li>
+        <li><span class="key-term">Process</span> - Identify pairs, calculate spread, trade on divergence</li>
+        <li><span class="key-term">Example</span> - Coca-Cola vs Pepsi, Google vs Facebook</li>
+        <li><span class="key-term">Risk</span> - Relationship breakdown, regime changes</li>
+      </ul>
+
+      <div class="algo-box">
+        <div class="algo-header">PAIRS TRADING ALGORITHM</div>
+        <div class="algo-code">
+# Calculate spread
+spread = price_A - beta * price_B
+
+# Generate signals
+if spread > z_score_upper:
+    short A, long B
+elif spread < z_score_lower:
+    long A, short B
+        </div>
+      </div>
+
+      <h3>Index Arbitrage</h3>
+      <ul>
+        <li><span class="highlight">Cash-Future Arbitrage</span> - Exploit mispricing between index and futures</li>
+        <li><span class="highlight">ETF Arbitrage</span> - Trade ETF vs underlying components</li>
+        <li><span class="highlight">Triangular Arbitrage</span> - Currency cross-rate inefficiencies</li>
+      </ul>
+
+      <h3>Mean Reversion Strategies</h3>
+      <ul>
+        <li><span class="key-term">Single Asset</span> - Trade individual securities back to mean</li>
+        <li><span class="key-term">Portfolio</span> - Optimize portfolio weights for mean reversion</li>
+        <li><span class="key-term">Cross-Asset</span> - Exploit relationships across asset classes</li>
+      </ul>
+
+      <h3>Implementation Considerations</h3>
+      <ul>
+        <li>Transaction costs can eliminate small edges</li>
+        <li>Model decay over time</li>
+        <li>Market regime changes</li>
+        <li>Liquidity constraints</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 3)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Statistical Arbitrage</div>
+          <div class="checkpoint-desc">Can you explain the concept of pairs trading?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Machine Learning in Trading -->
+  <div class="content-section">
+    <div class="section-number">04</div>
+    <h2 class="section-title">Machine Learning in Trading</h2>
+    <div class="section-content">
+      <p>Machine learning enables <span class="highlight">pattern recognition and predictive modeling</span> beyond traditional statistical methods. ML algorithms can discover complex relationships in financial data.</p>
+      
+      <h3>Supervised Learning Approaches</h3>
+      <ul>
+        <li><span class="key-term">Classification</span> - Predict direction (up/down/stay)</li>
+        <li><span class="key-term">Regression</span> - Predict price levels or returns</li>
+        <li><span class="key-term">Algorithms</span> - Random Forest, Gradient Boosting, Neural Networks</li>
+      </ul>
+
+      <h3>Unsupervised Learning</h3>
+      <ul>
+        <li><span class="highlight">Clustering</span> - Group similar assets or market regimes</li>
+        <li><span class="highlight">Dimensionality Reduction</span> - PCA, t-SNE for feature extraction</li>
+        <li><span class="highlight">Anomaly Detection</span> - Identify unusual market behavior</li>
+      </ul>
+
+      <h3>Deep Learning Applications</h3>
+      <ul>
+        <li><span class="key-term">LSTM Networks</span> - Time series prediction</li>
+        <li><span class="key-term">CNN</span> - Pattern recognition in chart data</li>
+        <li><span class="key-term">Transformers</span> - Sequential data analysis</li>
+        <li><span class="key-term">Reinforcement Learning</span> - Optimal trading policies</li>
+      </ul>
+
+      <div class="pipeline-steps">
+        <div class="pipeline-step">
+          <div class="step-number">1</div>
+          <div class="step-name">DATA COLLECTION</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-number">2</div>
+          <div class="step-name">FEATURE ENGINEERING</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-number">3</div>
+          <div class="step-name">MODEL TRAINING</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-number">4</div>
+          <div class="step-name">VALIDATION</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-number">5</div>
+          <div class="step-name">DEPLOYMENT</div>
+        </div>
+      </div>
+
+      <h3>Feature Engineering</h3>
+      <ul>
+        <li><span class="key-term">Technical Indicators</span> - Moving averages, RSI, MACD</li>
+        <li><span class="key-term">Market Microstructure</span> - Bid-ask spreads, order flow</li>
+        <li><span class="key-term">Alternative Data</span> - News sentiment, social media</li>
+        <li><span class="key-term">Economic Features</span> - Interest rates, inflation data</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 4)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: ML in Trading</div>
+          <div class="checkpoint-desc">Can you explain the difference between supervised and unsupervised learning in trading?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 5: Backtesting and Validation -->
+  <div class="content-section">
+    <div class="section-number">05</div>
+    <h2 class="section-title">Backtesting and Validation</h2>
+    <div class="section-content">
+      <p>Backtesting is <span class="highlight">essential for validating trading strategies</span> before risking real capital. Proper backtesting prevents overfitting and provides realistic performance expectations.</p>
+      
+      <h3>Backtesting Methodology</h3>
+      <ul>
+        <li><span class="key-term">Historical Data</span> - Quality, length, and survivorship bias</li>
+        <li><span class="key-term">Transaction Costs</span> - Commissions, slippage, market impact</li>
+        <li><span class="key-term">Market Conditions</span> - Different regimes (bull/bear/volatile)</li>
+        <li><span class="key-term">Out-of-Sample Testing</span> - Unseen data validation</li>
+      </ul>
+
+      <h3>Performance Metrics</h3>
+      <ul>
+        <li><span class="highlight">Sharpe Ratio</span> - Risk-adjusted returns</li>
+        <li><span class="highlight">Sortino Ratio</span> - Downside risk adjustment</li>
+        <li><span class="highlight">Maximum Drawdown</span> - Largest peak-to-trough decline</li>
+        <li><span class="highlight">Win Rate</span> - Percentage of profitable trades</li>
+        <li><span class="highlight">Profit Factor</span> - Gross profit / gross loss</li>
+      </ul>
+
+      <h3>Common Pitfalls</h3>
+      <ul>
+        <li><span class="key-term">Lookahead Bias</span> - Using future information</li>
+        <li><span class="key-term">Survivorship Bias</span> - Ignoring delisted companies</li>
+        <li><span class="key-term">Overfitting</span> - Too many parameters</li>
+        <li><span class="key-term">Data Mining</span> - Finding spurious patterns</li>
+      </ul>
+
+      <h3>Validation Techniques</h3>
+      <ul>
+        <li><span class="highlight">Walk-Forward Testing</span> - Rolling window validation</li>
+        <li><span class="highlight">Monte Carlo Simulation</span> - Random scenario testing</li>
+        <li><span class="highlight">Bootstrap Methods</span> - Resampling for confidence intervals</li>
+        <li><span class="highlight">Stress Testing</span> - Extreme market conditions</li>
+      </ul>
+
+      <div class="algo-box">
+        <div class="algo-header">BACKTESTING FRAMEWORK</div>
+        <div class="algo-code">
+# Walk-forward optimization
+for period in time_periods:
+    train_data = data[period.start:period.split]
+    test_data = data[period.split:period.end]
+    
+    model = train_model(train_data)
+    results = test_model(model, test_data)
+    aggregate_results(results)
+        </div>
+      </div>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 5)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Backtesting</div>
+          <div class="checkpoint-desc">Can you explain common backtesting pitfalls and how to avoid them?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 6: High-Frequency Trading -->
+  <div class="content-section">
+    <div class="section-number">06</div>
+    <h2 class="section-title">High-Frequency Trading</h2>
+    <div class="section-content">
+      <p>High-frequency trading (HFT) uses <span class="highlight">ultra-fast algorithms to trade in microseconds</span>. It represents the cutting edge of quantitative trading technology and strategy.</p>
+      
+      <h3>HFT Strategies</h3>
+      <ul>
+        <li><span class="key-term">Market Making</span> - Provide liquidity, capture bid-ask spread</li>
+        <li><span class="key-term">Arbitrage</span> - Exploit tiny price differences</li>
+        <li><span class="key-term">Momentum Ignition</span> - Detect and ride order flow</li>
+        <li><span class="key-term">Statistical Arbitrage</span> - Ultra-fast mean reversion</li>
+      </ul>
+
+      <h3>Technology Requirements</h3>
+      <ul>
+        <li><span class="highlight">Co-location</span> - Servers in exchange data centers</li>
+        <li><span class="highlight">FPGA/ASIC</span> - Hardware acceleration</li>
+        <li><span class="highlight">Microwave Networks</span> - Faster than fiber optics</li>
+        <li><span class="highlight">Custom Protocols</span> - Optimized messaging</li>
+      </ul>
+
+      <h3>Latency Optimization</h3>
+      <ul>
+        <li>Kernel bypass networking</li>
+        <li>Memory allocation optimization</li>
+        <li>Algorithm efficiency</li>
+        <li>Hardware acceleration</li>
+      </ul>
+
+      <h3>Risk Management in HFT</h3>
+      <ul>
+        <li><span class="key-term">Pre-Trade Risk</span> - Validate orders before sending</li>
+        <li><span class="key-term">Real-Time Monitoring</span> - Continuous position tracking</li>
+        <li><span class="key-term">Circuit Breakers</span> - Automatic trading halts</li>
+        <li><span class="key-term">Kill Switches</span> - Emergency shutdown mechanisms</li>
+      </ul>
+
+      <h3>Market Impact</h3>
+      <ul>
+        <li>Improved liquidity</li>
+        <li>Tighter spreads</li>
+        <li>Increased volatility</li>
+        <li>Regulatory scrutiny</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 6)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: High-Frequency Trading</div>
+          <div class="checkpoint-desc">Can you explain the key technology requirements for HFT?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 7: Portfolio Optimization -->
+  <div class="content-section">
+    <div class="section-number">07</div>
+    <h2 class="section-title">Portfolio Optimization</h2>
+    <div class="section-content">
+      <p>Quantitative portfolio optimization uses <span class="highlight">mathematical techniques to construct optimal portfolios</span> that maximize returns for given risk levels or minimize risk for target returns.</p>
+      
+      <h3>Modern Portfolio Theory</h3>
+      <ul>
+        <li><span class="key-term">Efficient Frontier</span> - Optimal risk-return combinations</li>
+        <li><span class="key-term">Mean-Variance Optimization</span> - Markowitz framework</li>
+        <li><span class="key-term">Capital Asset Pricing Model</span> - Risk and expected return</li>
+        <li><span class="key-term">Arbitrage Pricing Theory</span> - Multi-factor models</li>
+      </ul>
+
+      <h3>Optimization Techniques</h3>
+      <ul>
+        <li><span class="highlight">Quadratic Programming</span> - Standard mean-variance</li>
+        <li><span class="highlight">Genetic Algorithms</span> - Evolutionary optimization</li>
+        <li><span class="highlight">Simulated Annealing</span> - Global optimization</li>
+        <li><span class="highlight">Machine Learning</span> - Black-Litterman, robust optimization</li>
+      </ul>
+
+      <h3>Risk Models</h3>
+      <ul>
+        <li><span class="key-term">Factor Models</span> - Fama-French, Barra</li>
+        <li><span class="key-term">Risk Budgeting</span> - Equal risk contribution</li>
+        <li><span class="key-term">CVaR Optimization</span> - Conditional value at risk</li>
+        <li><span class="key-term">Drawdown Control</span> - Maximum drawdown constraints</li>
+      </ul>
+
+      <h3>Dynamic Allocation</h3>
+      <ul>
+        <li><span class="key-term">Regime Detection</span> - Identify market states</li>
+        <li><span class="key-term">Adaptive Allocation</span> - Adjust weights dynamically</li>
+        <li><span class="key-term">Risk Parity</span> - Equal risk across assets</li>
+        <li><span class="key-term">Tactical Overlay</span> - Short-term adjustments</li>
+      </ul>
+
+      <div class="strategy-grid">
+        <div class="strategy-card">
+          <div class="strategy-name">EQUAL WEIGHT</div>
+          <div class="strategy-desc">Simple, robust, no optimization needed</div>
+          <div class="strategy-metrics">
+            <div class="metric">
+              <div class="metric-value">Low</div>
+              <div class="metric-label">Complexity</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value">Medium</div>
+              <div class="metric-label">Efficiency</div>
+            </div>
+          </div>
+        </div>
+        <div class="strategy-card">
+          <div class="strategy-name">MINIMUM VARIANCE</div>
+          <div class="strategy-desc">Optimize for lowest portfolio risk</div>
+          <div class="strategy-metrics">
+            <div class="metric">
+              <div class="metric-value">Medium</div>
+              <div class="metric-label">Complexity</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value">High</div>
+              <div class="metric-label">Stability</div>
+            </div>
+          </div>
+        </div>
+        <div class="strategy-card">
+          <div class="strategy-name">RISK PARITY</div>
+          <div class="strategy-desc">Equal risk contribution across assets</div>
+          <div class="strategy-metrics">
+            <div class="metric">
+              <div class="metric-value">High</div>
+              <div class="metric-label">Complexity</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value">High</div>
+              <div class="metric-label">Diversification</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 7)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Portfolio Optimization</div>
+          <div class="checkpoint-desc">Can you explain the concept of the efficient frontier?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 8: Alternative Data and NLP -->
+  <div class="content-section">
+    <div class="section-number">08</div>
+    <h2 class="section-title">Alternative Data and NLP</h2>
+    <div class="section-content">
+      <p>Alternative data provides <span class="highlight">unique insights beyond traditional financial data</span>. Natural Language Processing (NLP) extracts actionable information from textual data sources.</p>
+      
+      <h3>Types of Alternative Data</h3>
+      <ul>
+        <li><span class="key-term">Satellite Imagery</span> - Oil tankers, crop yields, parking lots</li>
+        <li><span class="key-term">Credit Card Transactions</span> - Consumer spending patterns</li>
+        <li><span class="key-term">Web Scraping</span> - Price changes, product reviews</li>
+        <li><span class="key-term">Mobile Location Data</span> - Retail foot traffic</li>
+        <li><span class="key-term">Social Media</span> - Sentiment, trends, viral content</li>
+      </ul>
+
+      <h3>NLP in Finance</h3>
+      <ul>
+        <li><span class="highlight">Sentiment Analysis</span> - Positive/negative/neutral classification</li>
+        <li><span class="highlight">Topic Modeling</span> - Identify key themes in documents</li>
+        <li><span class="highlight">Named Entity Recognition</span> - Extract companies, people, places</li>
+        <li><span class="highlight">Event Detection</span> - Identify news events and their impact</li>
+      </ul>
+
+      <h3>Text Data Sources</h3>
+      <ul>
+        <li><span class="key-term">News Articles</span> - Financial news, press releases</li>
+        <li><span class="key-term">Social Media</span> - Twitter, Reddit, StockTwits</li>
+        <li><span class="key-term">Analyst Reports</span> - Research, recommendations</li>
+        <li><span class="key-term">SEC Filings</span> - 10-K, 10-Q, 8-K reports</li>
+      </ul>
+
+      <h3>Processing Pipeline</h3>
+      <ul>
+        <li>Data collection and cleaning</li>
+        <li>Text preprocessing (tokenization, stemming)</li>
+        <li>Feature extraction (TF-IDF, word embeddings)</li>
+        <li>Model training and validation</li>
+      </ul>
+
+      <h3>Challenges and Considerations</h3>
+      <ul>
+        <li>Data quality and coverage</li>
+        <li>Signal decay and crowding</li>
+        <li>Regulatory compliance</li>
+        <li>Cost and accessibility</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 8)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Alternative Data</div>
+          <div class="checkpoint-desc">Can you explain how NLP is used in financial analysis?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 9: Risk Management Systems -->
+  <div class="content-section">
+    <div class="section-number">09</div>
+    <h2 class="section-title">Risk Management Systems</h2>
+    <div class="section-content">
+      <p>Quantitative risk management systems <span class="highlight">monitor and control portfolio risk in real-time</span>. They are essential for survival in algorithmic trading where losses can accumulate rapidly.</p>
+      
+      <h3>Real-Time Risk Monitoring</h3>
+      <ul>
+        <li><span class="key-term">Position Limits</span> - Maximum exposure per asset/strategy</li>
+        <li><span class="key-term">Value at Risk (VaR)</span> - Potential loss at confidence level</li>
+        <li><span class="key-term">Expected Shortfall</span> - Average loss beyond VaR</li>
+        <li><span class="key-term">Stress Testing</span> - Portfolio performance under scenarios</li>
+      </ul>
+
+      <h3>Pre-Trade Risk Controls</h3>
+      <ul>
+        <li><span class="highlight">Order Size Limits</span> - Maximum order quantities</li>
+        <li><span class="highlight">Velocity Checks</span> - Order submission rate limits</li>
+        <li><span class="highlight">Concentration Limits</span> - Sector/asset class exposure</li>
+        <li><span class="highlight">Leverage Limits</span> - Maximum position sizing</li>
+      </ul>
+
+      <h3>Portfolio Risk Metrics</h3>
+      <ul>
+        <li><span class="key-term">Beta Exposure</span> - Market sensitivity</li>
+        <li><span class="key-term">Factor Exposures</span> - Risk factor sensitivities</li>
+        <li><span class="key-term">Correlation Analysis</span> - Position relationships</li>
+        <li><span class="key-term">Liquidity Risk</span> - Market impact and exit costs</li>
+      </ul>
+
+      <h3>Operational Risk</h3>
+      <ul>
+        <li><span class="key-term">System Failures</span> - Technology redundancy</li>
+        <li><span class="key-term">Model Risk</span> - Model validation and monitoring</li>
+        <li><span class="key-term">Counterparty Risk</span> - Default and settlement risk</li>
+        <li><span class="key-term">Compliance Risk</span> - Regulatory adherence</li>
+      </ul>
+
+      <h3>Alert and Response Systems</h3>
+      <ul>
+        <li><span class="highlight">Real-Time Alerts</span> - Automatic risk breach notifications</li>
+        <li><span class="highlight">Automatic Position Reduction</span> - Pre-programmed exits</li>
+        <li><span class="highlight">Emergency Shutdown</span> - Complete trading halt</li>
+        <li><span class="highlight">Incident Response</span> - Post-mortem analysis</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 9)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Risk Management</div>
+          <div class="checkpoint-desc">Can you explain the importance of real-time risk monitoring?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 10: Future Trends and Ethics -->
+  <div class="content-section">
+    <div class="section-number">10</div>
+    <h2 class="section-title">Future Trends and Ethics</h2>
+    <div class="section-content">
+      <p>The future of quantitative trading involves <span class="highlight">AI advancement, regulatory evolution, and ethical considerations</span>. Understanding these trends is crucial for long-term success.</p>
+      
+      <h3>Emerging Technologies</h3>
+      <ul>
+        <li><span class="key-term">Quantum Computing</span> - Exponential speedup for optimization</li>
+        <li><span class="key-term">Advanced AI</span> - GPT models, multimodal learning</li>
+        <li><span class="key-term">Edge Computing</span> - Distributed processing</li>
+        <li><span class="key-term">Blockchain</span> - Decentralized finance (DeFi)</li>
+      </ul>
+
+      <h3>Regulatory Landscape</h3>
+      <ul>
+        <li><span class="highlight">AI Regulation</span> - Algorithmic transparency requirements</li>
+        <li><span class="highlight">Market Structure</span> - Exchange rules and access</li>
+        <li><span class="highlight">Data Privacy</span> - Alternative data usage restrictions</li>
+        <li><span class="highlight">Systemic Risk</span> - Macro-prudential oversight</li>
+      </ul>
+
+      <h3>Ethical Considerations</h3>
+      <ul>
+        <li><span class="key-term">Market Fairness</span> - Access to technology and information</li>
+        <li><span class="key-term">Systemic Risk</span> - Potential for market crashes</li>
+        <li><span class="key-term">Data Privacy</span> - Use of personal and alternative data</li>
+        <li><span class="key-term">Employment Impact</span> - Automation of trading jobs</li>
+      </ul>
+
+      <h3>Market Structure Evolution</h3>
+      <ul>
+        <li><span class="highlight">Decentralized Exchanges</span> - Blockchain-based trading</li>
+        <li><span class="highlight">24/7 Markets</span> - Always-on trading</li>
+        <li><span class="highlight">Tokenization</span> - Digital assets for traditional securities</li>
+        <li><span class="highlight">Retail Participation</span> - Democratization of quant trading</li>
+      </ul>
+
+      <h3>Skill Requirements Evolution</h3>
+      <ul>
+        <li><span class="key-term">Interdisciplinary Skills</span> - Finance + CS + Data Science</li>
+        <li><span class="key-term">Domain Expertise</span> - Deep market understanding</li>
+        <li><span class="key-term">Adaptability</span> - Continuous learning</li>
+        <li><span class="key-term">Communication</span> - Explaining complex models</li>
+      </ul>
+
+      <h3>Building a Sustainable Career</h3>
+      <ul>
+        <li>Focus on robust, explainable models</li>
+        <li>Emphasize risk management over returns</li>
+        <li>Stay current with technology and regulations</li>
+        <li>Develop ethical framework for trading</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 10)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Future Trends</div>
+          <div class="checkpoint-desc">Can you discuss the ethical considerations in quantitative trading?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button class="btn-primary" onclick="completeModule()">MARK AS COMPLETE</button>
+    <button class="btn-secondary" onclick="window.location.href='learning-module.html'">BACK TO MODULES</button>
+  </div>
+</div>
+
+<script>
+    // Module progress tracking
+    let moduleProgress = {
+        checkpoints: [false, false, false, false, false, false, false, false, false, false],
+        startTime: Date.now(),
+        completed: false
+    };
+
+    // Load saved progress
+    function loadProgress() {
+        const saved = localStorage.getItem('ai-quant-strategies_progress');
+        if (saved) {
+            moduleProgress = JSON.parse(saved);
+            updateUI();
+        }
+        updateTimeSpent();
+    }
+
+    // Save progress
+    function saveProgress() {
+        localStorage.setItem('ai-quant-strategies_progress', JSON.stringify(moduleProgress));
+        updateLearningModuleDashboard();
+    }
+
+    // Toggle checkpoint
+    function toggleCheckpoint(element, checkpointIndex) {
+        const isChecked = element.classList.contains('checked');
+        
+        if (isChecked) {
+            element.classList.remove('checked');
+            element.querySelector('.checkmark').style.display = 'none';
+            moduleProgress.checkpoints[checkpointIndex - 1] = false;
+        } else {
+            element.classList.add('checked');
+            element.querySelector('.checkmark').style.display = 'block';
+            moduleProgress.checkpoints[checkpointIndex - 1] = true;
+            
+            // Visual feedback
+            element.style.animation = 'pulse 0.5s ease';
+            setTimeout(() => {
+                element.style.animation = '';
+            }, 500);
+        }
+        
+        updateProgress();
+        saveProgress();
+    }
+
+    // Update progress bar
+    function updateProgress() {
+        const completedCount = moduleProgress.checkpoints.filter(c => c).length;
+        const totalCount = moduleProgress.checkpoints.length;
+        const percentage = Math.round((completedCount / totalCount) * 100);
+        
+        document.getElementById('progressFill').style.width = percentage + '%';
+        document.getElementById('progressPercentage').textContent = percentage + '%';
+        document.getElementById('completedCount').textContent = completedCount;
+    }
+
+    // Update time spent
+    function updateTimeSpent() {
+        setInterval(() => {
+            const minutes = Math.floor((Date.now() - moduleProgress.startTime) / 60000);
+            document.getElementById('timeSpent').textContent = minutes;
+        }, 60000);
+    }
+
+    // Complete module
+    function completeModule() {
+        const completedCount = moduleProgress.checkpoints.filter(c => c).length;
+        
+        if (completedCount < 10) {
+            alert('Please complete all checkpoints before marking the module as complete.');
+            return;
+        }
+        
+        moduleProgress.completed = true;
+        moduleProgress.completionTime = Date.now();
+        saveProgress();
+        
+        // Show success message
+        const button = event.target;
+        button.textContent = '✓ MODULE COMPLETED';
+        button.style.background = 'var(--amber)';
+        button.style.color = 'var(--bg)';
+        
+        // Update dashboard
+        updateLearningModuleDashboard();
+        
+        // Redirect after delay
+        setTimeout(() => {
+            window.location.href = 'learning-module.html';
+        }, 2000);
+    }
+
+    // Update learning module dashboard
+    function updateLearningModuleDashboard() {
+        // Update dashboard data
+        let dashboardData = JSON.parse(localStorage.getItem('learningModule_progress') || '{}');
+        
+        dashboardData['ai-quant-strategies'] = {
+            completed: moduleProgress.completed,
+            progress: moduleProgress.checkpoints.filter(c => c).length,
+            timeSpent: Math.floor((Date.now() - moduleProgress.startTime) / 60000),
+            lastAccessed: new Date().toISOString()
+        };
+        
+        localStorage.setItem('learningModule_progress', JSON.stringify(dashboardData));
+    }
+
+    // Update UI based on saved progress
+    function updateUI() {
+        // Update checkpoints
+        moduleProgress.checkpoints.forEach((completed, index) => {
+            if (completed) {
+                const checkbox = document.querySelectorAll('.checkpoint-checkbox')[index];
+                if (checkbox) {
+                    checkbox.classList.add('checked');
+                    checkbox.querySelector('.checkmark').style.display = 'block';
+                }
+            }
+        });
+        
+        // Update progress
+        updateProgress();
+        
+        // Show completion status
+        if (moduleProgress.completed) {
+            const button = document.querySelector('.btn-primary');
+            button.textContent = '✓ MODULE COMPLETED';
+            button.style.background = 'var(--amber)';
+            button.style.color = 'var(--bg)';
+        }
+    }
+
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const cursorRing = document.getElementById('cursorRing');
+
+    document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+        cursorRing.style.left = e.clientX + 'px';
+        cursorRing.style.top = e.clientY + 'px';
+    });
+
+    document.addEventListener('mousedown', () => {
+        cursor.style.transform = 'scale(0.8)';
+        cursorRing.style.transform = 'scale(0.8)';
+    });
+
+    document.addEventListener('mouseup', () => {
+        cursor.style.transform = 'scale(1)';
+        cursorRing.style.transform = 'scale(1)';
+    });
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProgress();
+    });
+</script>
+
+</body>
+</html>

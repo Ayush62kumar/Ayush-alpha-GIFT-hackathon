@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Analyzer | AI Finance Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
+  <style>
+  :root {
+    --bg: #020b12;
+    --surface: #061520;
+    --border: rgba(0, 220, 130, 0.15);
+    --green: #00dc82;
+    --green-dim: rgba(0, 220, 130, 0.08);
+    --amber: #f5a623;
+    --red: #ff4a6e;
+    --text: #e8f4f0;
+    --muted: rgba(232, 244, 240, 0.45);
+    --mono: 'DM Mono', monospace;
+    --yellow: #FFE600;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 12px; height: 12px; background: var(--green); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: transform 0.15s ease; mix-blend-mode: screen; }
+  .cursor-ring { width: 36px; height: 36px; border: 1px solid rgba(0,220,130,0.4); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); opacity:0.6; pointer-events:none; z-index:1000; }
+
+  /* NAV */
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:24px 60px; background:linear-gradient(to bottom,rgba(2,11,18,0.95),transparent); backdrop-filter:blur(2px); }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:var(--text); display:flex; align-items:center; gap:10px; cursor:none; }
+  .logo-dot { width:8px; height:8px; background:var(--green); border-radius:50%; box-shadow:0 0 16px var(--green); animation:pulse 2s infinite; }
+  .nav-links { display:flex; gap:40px; list-style:none; }
+  .nav-links a { font-size:12px; font-weight:300; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.3s; }
+  .nav-links a:hover { color:var(--green); }
+  .nav-links a.active-nav { color:var(--green); }
+  .nav-cta { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:10px 24px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; transition:all 0.3s; }
+  .nav-cta:hover { background:var(--green); color:var(--bg); }
+
+  /* Main Content */
+  .main-content { padding:120px 60px 80px; min-height:100vh; }
+  .page-header { margin-bottom:60px; }
+  .page-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,6vw,80px); letter-spacing:2px; line-height:1; margin-bottom:20px; }
+  .page-title em { font-family:'DM Serif Display',serif; font-style:italic; color:var(--green); }
+  .page-subtitle { font-size:16px; font-weight:300; color:var(--muted); line-height:1.8; max-width:600px; }
+
+  /* Market Overview */
+  .market-overview { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; margin-bottom:40px; }
+  .market-card { background:var(--surface); border:1px solid var(--border); padding:24px; position:relative; }
+  .market-card::before { content:''; position:absolute; top:0; left:20px; right:20px; height:1px; background:linear-gradient(90deg,transparent,var(--green),transparent); }
+  .market-label { font-family:var(--mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+  .market-value { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; color:var(--text); line-height:1; margin-bottom:8px; }
+  .market-change { font-family:var(--mono); font-size:12px; font-weight:500; }
+  .positive { color:var(--green); }
+  .negative { color:var(--red); }
+
+  /* Search Section */
+  .search-section { background:var(--surface); border:1px solid var(--border); padding:30px; margin-bottom:40px; }
+  .search-title { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; margin-bottom:20px; }
+  .search-row { display:flex; gap:15px; }
+  .search-input { flex:1; background:rgba(2,11,18,0.8); border:1px solid var(--border); padding:14px 20px; font-family:var(--mono); font-size:14px; color:var(--text); outline:none; transition:border-color 0.3s; }
+  .search-input:focus { border-color:var(--green); }
+  .search-input::placeholder { color:var(--muted); }
+  .search-btn { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:14px 28px; background:var(--green); color:var(--bg); border:none; cursor:none; font-weight:600; transition:opacity 0.3s; white-space:nowrap; }
+  .search-btn:hover { opacity:0.85; }
+
+  /* Market Table */
+  .market-table-section { background:var(--surface); border:1px solid var(--border); padding:30px; margin-bottom:40px; }
+  .table-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
+  .table-title { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; }
+  .refresh-btn { font-family:var(--mono); font-size:11px; letter-spacing:1px; padding:8px 16px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; transition:all 0.3s; }
+  .refresh-btn:hover { background:var(--green); color:var(--bg); }
+  .market-table { width:100%; border-collapse: collapse; }
+  .market-table th { font-family:var(--mono); font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; padding:12px; text-align:left; border-bottom:1px solid var(--border); }
+  .market-table td { font-family:var(--mono); font-size:12px; padding:16px 12px; border-bottom:1px solid rgba(0,220,130,0.1); }
+  .market-table tr:hover { background:var(--green-dim); }
+  .symbol { font-weight:600; color:var(--text); }
+  .name { color:var(--muted); }
+  .price { font-weight:500; }
+  .change { font-weight:500; }
+  .volume { color:var(--muted); }
+
+  /* Chart Section */
+  .chart-section { background:var(--surface); border:1px solid var(--border); padding:30px; margin-bottom:40px; }
+  .chart-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .chart-info { display:flex; align-items:center; gap:20px; }
+  .chart-title { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; color:var(--text); }
+  .chart-status { display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11px; }
+  .status-dot { width:8px; height:8px; background:var(--green); border-radius:50%; box-shadow:0 0 8px var(--green); animation:pulse 2s infinite; }
+  .chart-controls { display:flex; gap:10px; }
+  .refresh-btn { font-family:var(--mono); font-size:11px; letter-spacing:1px; padding:8px 16px; background:var(--green); color:var(--bg); border:none; border-radius:4px; cursor:pointer; transition:all 0.3s; font-weight:600; }
+  .refresh-btn:hover { opacity:0.8; }
+  .refresh-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .live-btn { font-family:var(--mono); font-size:11px; letter-spacing:1px; padding:8px 16px; background:var(--red); color:var(--bg); border:none; border-radius:4px; cursor:pointer; transition:all 0.3s; font-weight:600; animation:pulse 2s infinite; }
+  .live-btn:hover { opacity:0.8; }
+  .live-btn.active { background:var(--green); }
+  .live-btn.paused { background:#666; animation:none; }
+  .time-btn { font-family:var(--mono); font-size:10px; letter-spacing:1px; padding:6px 12px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:none; transition:all 0.3s; }
+  .time-btn.active { background:var(--green); color:var(--bg); border-color:var(--green); }
+  .time-btn:hover:not(.active) { border-color:var(--green); color:var(--green); }
+  .chart-container { height:400px; background:rgba(2,11,18,0.5); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; position:relative; }
+
+  /* News Section */
+  .news-section { background:var(--surface); border:1px solid var(--border); padding:30px; }
+  .news-title { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; margin-bottom:30px; }
+  .news-list { display:flex; flex-direction:column; gap:0; }
+  .news-item { padding:20px 0; border-bottom:1px solid var(--border); display:grid; grid-template-columns:48px 1fr auto; gap:16px; align-items:start; cursor:none; transition:background 0.3s; }
+  .news-item:hover { background:var(--green-dim); margin:0 -20px; padding:20px; }
+  .news-sentiment { font-family:var(--mono); font-size:9px; letter-spacing:1px; padding:4px 6px; text-transform:uppercase; margin-top:2px; text-align:center; }
+  .bullish { background:rgba(0,220,130,0.15); color:var(--green); }
+  .bearish { background:rgba(255,74,110,0.15); color:var(--red); }
+  .neutral { background:rgba(245,166,35,0.15); color:var(--amber); }
+  .news-headline { font-size:13px; line-height:1.6; color:var(--text); margin-bottom:4px; }
+  .news-meta { font-family:var(--mono); font-size:10px; color:var(--muted); }
+  .news-time { font-family:var(--mono); font-size:11px; color:var(--muted); }
+
+  /* Animations */
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  @keyframes slideUp { to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="window.location.href='index.html'" style="cursor:none;">
+    <div class="logo-dot"></div>
+    ALPHA
+  </div>
+  <ul class="nav-links">
+    <li><a href="learning-module.html">Learning Module</a></li>
+    <li><a href="alpha-rush.html">Alpha Rush</a></li>
+    <li><a href="market-analyzer.html" class="active-nav">Market Analyzer</a></li>
+    <li><a href="portfolio-analyzer.html">Portfolio Analyzer</a></li>
+  </ul>
+  <button class="nav-cta" onclick="window.location.href='index.html'">BACK TO HOME</button>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">MARKET <em>ANALYZER</em></h1>
+    <p class="page-subtitle">Real-time market data and analysis powered by Finnhub API. Track prices, analyze trends, and make informed decisions.</p>
+  </div>
+
+  <!-- Market Overview -->
+  <div class="market-overview">
+    <div class="market-card">
+      <div class="market-label">S&P 500</div>
+      <div class="market-value">4,783.45</div>
+      <div class="market-change positive">+0.82%</div>
+    </div>
+    <div class="market-card">
+      <div class="market-label">NASDAQ</div>
+      <div class="market-value">15,123.68</div>
+      <div class="market-change positive">+1.24%</div>
+    </div>
+    <div class="market-card">
+      <div class="market-label">DOW JONES</div>
+      <div class="market-value">37,545.33</div>
+      <div class="market-change negative">-0.15%</div>
+    </div>
+    <div class="market-card">
+      <div class="market-label">BITCOIN</div>
+      <div class="market-value">$52,342</div>
+      <div class="market-change positive">+2.18%</div>
+    </div>
+  </div>
+
+  <!-- Search Section -->
+  <div class="search-section">
+    <h3 class="search-title">SEARCH STOCKS</h3>
+    <div class="search-row">
+      <input type="text" class="search-input" id="stockSearch" placeholder="Enter stock symbol or company name (e.g., AAPL, Tesla)">
+      <button class="search-btn" onclick="searchStock()">SEARCH →</button>
+    </div>
+  </div>
+
+  <!-- Market Table -->
+  <div class="market-table-section">
+    <div class="table-header">
+      <h3 class="table-title">TRENDING STOCKS</h3>
+      <button class="refresh-btn" onclick="refreshData()">REFRESH</button>
+    </div>
+    <table class="market-table">
+      <thead>
+        <tr>
+          <th>SYMBOL</th>
+          <th>NAME</th>
+          <th>PRICE</th>
+          <th>CHANGE</th>
+          <th>CHANGE %</th>
+          <th>VOLUME</th>
+          <th>MARKET CAP</th>
+        </tr>
+      </thead>
+      <tbody id="marketTableBody">
+        <tr>
+          <td class="symbol">AAPL</td>
+          <td class="name">Apple Inc.</td>
+          <td class="price">$195.89</td>
+          <td class="change positive">+2.34</td>
+          <td class="change positive">+1.21%</td>
+          <td class="volume">52.3M</td>
+          <td class="volume">3.02T</td>
+        </tr>
+        <tr>
+          <td class="symbol">TSLA</td>
+          <td class="name">Tesla Inc.</td>
+          <td class="price">$248.42</td>
+          <td class="change positive">+5.67</td>
+          <td class="change positive">+2.34%</td>
+          <td class="volume">118.7M</td>
+          <td class="volume">789B</td>
+        </tr>
+        <tr>
+          <td class="symbol">GOOGL</td>
+          <td class="name">Alphabet Inc.</td>
+          <td class="price">$151.23</td>
+          <td class="change negative">-0.89</td>
+          <td class="change negative">-0.58%</td>
+          <td class="volume">28.4M</td>
+          <td class="volume">1.89T</td>
+        </tr>
+        <tr>
+          <td class="symbol">MSFT</td>
+          <td class="name">Microsoft Corp.</td>
+          <td class="price">$412.35</td>
+          <td class="change positive">+3.21</td>
+          <td class="change positive">+0.78%</td>
+          <td class="volume">22.1M</td>
+          <td class="volume">3.06T</td>
+        </tr>
+        <tr>
+          <td class="symbol">AMZN</td>
+          <td class="name">Amazon.com Inc.</td>
+          <td class="price">$178.32</td>
+          <td class="change positive">+1.45</td>
+          <td class="change positive">+0.82%</td>
+          <td class="volume">41.8M</td>
+          <td class="volume">1.84T</td>
+        </tr>
+        <tr>
+          <td class="symbol">NVDA</td>
+          <td class="name">NVIDIA Corp.</td>
+          <td class="price">$732.41</td>
+          <td class="change positive">+12.34</td>
+          <td class="change positive">+1.71%</td>
+          <td class="volume">45.2M</td>
+          <td class="volume">1.80T</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Chart Section -->
+  <div class="chart-section">
+    <div class="chart-header">
+      <div class="chart-info">
+        <h3 class="chart-title">MARKET CHART</h3>
+        <div class="chart-status">
+          <div class="status-dot"></div>
+          <span id="dataSource">Loading...</span>
+        </div>
+      </div>
+      <div class="chart-controls">
+        <button class="refresh-btn" onclick="refreshChartData()">🔄 Refresh</button>
+        <button class="live-btn" id="liveBtn" onclick="toggleLiveData()">🔴 LIVE</button>
+      </div>
+    </div>
+    <div class="time-selector">
+      <button class="time-btn active" onclick="changeTimeframe('1D')">1D</button>
+      <button class="time-btn" onclick="changeTimeframe('1W')">1W</button>
+      <button class="time-btn" onclick="changeTimeframe('1M')">1M</button>
+      <button class="time-btn" onclick="changeTimeframe('3M')">3M</button>
+      <button class="time-btn" onclick="changeTimeframe('1Y')">1Y</button>
+    </div>
+    <div class="chart-container">
+      <canvas id="priceChart" style="width:100%; height:400px;"></canvas>
+    </div>
+  </div>
+
+  <!-- News Section -->
+  <div class="news-section">
+    <h3 class="news-title">MARKET NEWS</h3>
+    <div class="news-list">
+      <div class="news-item">
+        <div class="news-sentiment bullish">BULLISH</div>
+        <div>
+          <div class="news-headline">Fed Signals Potential Rate Cuts in 2024, Markets Rally</div>
+          <div class="news-meta">Reuters • 2 hours ago</div>
+        </div>
+        <div class="news-time">14:32</div>
+      </div>
+      <div class="news-item">
+        <div class="news-sentiment bearish">BEARISH</div>
+        <div>
+          <div class="news-headline">Tech Giants Face Regulatory Pressure in EU</div>
+          <div class="news-meta">Bloomberg • 4 hours ago</div>
+        </div>
+        <div class="news-time">12:15</div>
+      </div>
+      <div class="news-item">
+        <div class="news-sentiment bullish">BULLISH</div>
+        <div>
+          <div class="news-headline">AI Boom Drives Semiconductor Stocks to New Heights</div>
+          <div class="news-meta">CNBC • 6 hours ago</div>
+        </div>
+        <div class="news-time">10:45</div>
+      </div>
+      <div class="news-item">
+        <div class="news-sentiment neutral">NEUTRAL</div>
+        <div>
+          <div class="news-headline">Oil Prices Stable Despite Middle East Tensions</div>
+          <div class="news-meta">WSJ • 8 hours ago</div>
+        </div>
+        <div class="news-time">08:30</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    // Alpha Vantage API Configuration
+    const ALPHA_VANTAGE_API_KEY = 'OJ8YPNO4Z6IR8545';
+    const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
+    
+    // Chart.js instance
+    let chartInstance = null;
+    
+    // Chart data storage
+    let realTimeData = {
+      ohlcv: [], // Array of {x: date, o: open, h: high, l: low, c: close, v: volume}
+      symbol: 'AAPL',
+      currentPrice: 0,
+      priceChange: 0,
+      percentChange: 0
+    };
+
+    // Fetch real-time stock data from Alpha Vantage with CORS proxy
+    async function fetchRealTimeData(symbol = 'AAPL') {
+      try {
+        console.log('🔄 Fetching real-time data for', symbol);
+        
+        // Try multiple approaches for API access
+        const urls = [
+          // Direct Alpha Vantage (might have CORS issues)
+          `${ALPHA_VANTAGE_BASE_URL}?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`,
+          // CORS proxy (if needed)
+          `https://cors-anywhere.herokuapp.com/${ALPHA_VANTAGE_BASE_URL}?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`,
+          // Alternative proxy
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(`${ALPHA_VANTAGE_BASE_URL}?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`)}`
+        ];
+        
+        let data = null;
+        let success = false;
+        
+        for (let i = 0; i < urls.length; i++) {
+          try {
+            console.log(`📡 Attempting API call ${i + 1}/${urls.length}`);
+            console.log('🔗 URL:', urls[i]);
+            
+            const response = await fetch(urls[i], {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            });
+            
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            data = await response.json();
+            console.log('📊 API Response:', data);
+            success = true;
+            break;
+            
+          } catch (error) {
+            console.warn(`❌ Attempt ${i + 1} failed:`, error.message);
+            continue;
+          }
+        }
+        
+        if (!success || !data) {
+          console.error('💥 All API attempts failed');
+          return false;
+        }
+        
+        // Check for API error messages
+        if (data['Error Message']) {
+          console.error('❌ API Error:', data['Error Message']);
+          return false;
+        }
+        
+        if (data['Note']) {
+          console.warn('⚠️ API Limit Note:', data['Note']);
+          return false;
+        }
+        
+        if (data['Information']) {
+          console.warn('ℹ️ API Information:', data['Information']);
+          return false;
+        }
+        
+        if (data['Time Series (Daily)']) {
+          console.log('✅ Found time series data!');
+          const timeSeries = data['Time Series (Daily)'];
+          const dates = Object.keys(timeSeries).slice(0, 30).reverse(); // Last 30 days
+          
+          console.log('📅 Processing', dates.length, 'days of data');
+          
+          const ohlcvData = [];
+          
+          dates.forEach((date, index) => {
+            const dayData = timeSeries[date];
+            const open = parseFloat(dayData['1. open']);
+            const high = parseFloat(dayData['2. high']);
+            const low = parseFloat(dayData['3. low']);
+            const close = parseFloat(dayData['4. close']);
+            const volume = parseFloat(dayData['5. volume']);
+            
+            ohlcvData.push({
+              x: date,
+              o: open,
+              h: high,
+              l: low,
+              c: close,
+              v: volume
+            });
+            
+            console.log(`Day ${index + 1}: ${date} - O:${open} H:${high} L:${low} C:${close} V:${(volume/1000000).toFixed(1)}M`);
+          });
+          
+          // Calculate price changes
+          const currentPrice = ohlcvData[ohlcvData.length - 1].c;
+          const previousPrice = ohlcvData[0].c;
+          const priceChange = currentPrice - previousPrice;
+          const percentChange = (priceChange / previousPrice) * 100;
+          
+          console.log('💰 Price Analysis:');
+          console.log(`   Current: $${currentPrice.toFixed(2)}`);
+          console.log(`   Change: $${priceChange.toFixed(2)} (${percentChange.toFixed(2)}%)`);
+          
+          realTimeData = {
+            ohlcv: ohlcvData,
+            symbol: symbol,
+            currentPrice: currentPrice,
+            priceChange: priceChange,
+            percentChange: percentChange
+          };
+          
+          console.log('🎯 Processed real-time data:', realTimeData);
+          return true;
+        } else {
+          console.error('❌ No time series data found in response');
+          console.log('Response keys:', Object.keys(data));
+          return false;
+        }
+      } catch (error) {
+        console.error('💥 Critical error in fetchRealTimeData:', error);
+        return false;
+      }
+    }
+
+    // Generate realistic OHLCV sample data that changes over time
+    function generateDynamicSampleData() {
+      const now = new Date();
+      const ohlcvData = [];
+      
+      // Start with a base price around current AAPL price
+      let basePrice = 190 + Math.random() * 20; // Random base between $190-$210
+      
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        
+        // Skip weekends
+        if (date.getDay() === 0 || date.getDay() === 6) {
+          continue;
+        }
+        
+        // Generate realistic OHLC data
+        const volatility = 0.02; // 2% daily volatility
+        const trend = 0.0003; // Slight upward trend
+        
+        // Open price (close of previous day + some movement)
+        const open = i === 29 ? basePrice : ohlcvData[ohlcvData.length - 1].c;
+        
+        // Generate high and low based on volatility
+        const highLowRange = basePrice * volatility;
+        const high = open + (Math.random() * highLowRange);
+        const low = open - (Math.random() * highLowRange);
+        
+        // Close price (somewhere between high and low, with trend)
+        const closeTrend = basePrice * trend;
+        const closeRandom = (Math.random() - 0.48) * volatility; // Slight bias upward
+        const close = open + closeTrend + (basePrice * closeRandom);
+        
+        // Ensure close is within high/low bounds
+        const finalClose = Math.max(low, Math.min(high, close));
+        
+        // Generate volume (higher on bigger price moves)
+        const priceMove = Math.abs(finalClose - open);
+        const baseVolume = 50000000 + Math.random() * 30000000; // 50-80M base volume
+        const volumeMultiplier = priceMove > 2 ? 1.5 : 1;
+        const volume = baseVolume * volumeMultiplier;
+        
+        ohlcvData.push({
+          x: date.toISOString().split('T')[0], // YYYY-MM-DD format
+          o: parseFloat(open.toFixed(2)),
+          h: parseFloat(high.toFixed(2)),
+          l: parseFloat(low.toFixed(2)),
+          c: parseFloat(finalClose.toFixed(2)),
+          v: Math.round(volume)
+        });
+        
+        // Update base price for next day
+        basePrice = finalClose;
+        
+        // Add some realistic patterns
+        if (i % 5 === 0) {
+          // Weekly pattern
+          basePrice += (Math.random() - 0.5) * basePrice * 0.01;
+        }
+      }
+      
+      const currentPrice = ohlcvData[ohlcvData.length - 1].c;
+      const previousPrice = ohlcvData[0].c;
+      const priceChange = currentPrice - previousPrice;
+      const percentChange = (priceChange / previousPrice) * 100;
+      
+      console.log('🎲 Generated dynamic OHLCV data:');
+      console.log(`   Price range: $${Math.min(...ohlcvData.map(d => d.l)).toFixed(2)} - $${Math.max(...ohlcvData.map(d => d.h)).toFixed(2)}`);
+      console.log(`   Current: $${currentPrice.toFixed(2)} (${percentChange.toFixed(2)}%)`);
+      
+      return {
+        ohlcv: ohlcvData,
+        symbol: 'AAPL',
+        currentPrice: currentPrice,
+        priceChange: priceChange,
+        percentChange: percentChange
+      };
+    }
+
+    // Live data update simulation
+    let liveUpdateInterval = null;
+    
+    function startLiveUpdates() {
+      // Clear any existing interval
+      if (liveUpdateInterval) {
+        clearInterval(liveUpdateInterval);
+      }
+      
+      // Update every 3 seconds to simulate live data
+      liveUpdateInterval = setInterval(() => {
+        updateLatestCandle();
+      }, 3000);
+      
+      console.log('🔄 Live updates started (3s interval)');
+    }
+    
+    function updateLatestCandle() {
+      if (realTimeData.ohlcv.length === 0) return;
+      
+      const latestIndex = realTimeData.ohlcv.length - 1;
+      const latestCandle = realTimeData.ohlcv[latestIndex];
+      
+      // Simulate small price movements
+      const volatility = 0.001; // 0.1% volatility for live updates
+      const priceChange = (Math.random() - 0.5) * 2 * volatility * latestCandle.c;
+      
+      // Update the latest candle's close price
+      const newClose = latestCandle.c + priceChange;
+      
+      // Ensure close is within reasonable bounds
+      const minClose = Math.max(latestCandle.l, latestCandle.o * 0.99);
+      const maxClose = Math.min(latestCandle.h, latestCandle.o * 1.01);
+      const finalClose = Math.max(minClose, Math.min(maxClose, newClose));
+      
+      // Update the candle
+      realTimeData.ohlcv[latestIndex].c = parseFloat(finalClose.toFixed(2));
+      
+      // Update high/low if needed
+      if (finalClose > latestCandle.h) {
+        realTimeData.ohlcv[latestIndex].h = parseFloat(finalClose.toFixed(2));
+      }
+      if (finalClose < latestCandle.l) {
+        realTimeData.ohlcv[latestIndex].l = parseFloat(finalClose.toFixed(2));
+      }
+      
+      // Add some volume
+      const additionalVolume = Math.random() * 1000000; // Up to 1M additional volume
+      realTimeData.ohlcv[latestIndex].v += Math.round(additionalVolume);
+      
+      // Update current price and change
+      realTimeData.currentPrice = finalClose;
+      const previousPrice = realTimeData.ohlcv[0].c;
+      realTimeData.priceChange = finalClose - previousPrice;
+      realTimeData.percentChange = (realTimeData.priceChange / previousPrice) * 100;
+      
+      // Update the chart
+      if (chartInstance) {
+        chartInstance.data.datasets[1].data = realTimeData.ohlcv.map(d => [d.o, d.c]);
+        chartInstance.data.datasets[0].data = realTimeData.ohlcv.map(d => [d.l, d.h]);
+        chartInstance.data.datasets[2].data = realTimeData.ohlcv.map(d => d.v / 1000000);
+        chartInstance.update('none'); // Update without animation for live feel
+      }
+      
+      console.log(`📈 Live update: $${finalClose.toFixed(2)} (${priceChange >= 0 ? '▲' : '▼'} ${Math.abs(priceChange).toFixed(3)})`);
+    }
+    
+    function stopLiveUpdates() {
+      if (liveUpdateInterval) {
+        clearInterval(liveUpdateInterval);
+        liveUpdateInterval = null;
+        console.log('⏸️ Live updates stopped');
+      }
+    }
+    
+    function toggleLiveData() {
+      const liveBtn = document.getElementById('liveBtn');
+      
+      if (liveUpdateInterval) {
+        // Stop live updates
+        stopLiveUpdates();
+        liveBtn.textContent = '▶️ LIVE';
+        liveBtn.classList.remove('active');
+        liveBtn.classList.add('paused');
+      } else {
+        // Start live updates
+        startLiveUpdates();
+        liveBtn.textContent = '🔴 LIVE';
+        liveBtn.classList.add('active');
+        liveBtn.classList.remove('paused');
+      }
+    }
+    function initializeChart() {
+      const ctx = document.getElementById('priceChart').getContext('2d');
+      
+      // Get data
+      let chartData;
+      if (realTimeData.ohlcv.length > 0) {
+        console.log('📊 Using real Alpha Vantage OHLCV data');
+        chartData = realTimeData;
+      } else {
+        console.log('🎲 Using dynamic sample OHLCV data');
+        chartData = generateDynamicSampleData();
+      }
+      
+      // Prepare data for Chart.js
+      const candlestickData = chartData.ohlcv;
+      const labels = candlestickData.map(d => d.x);
+      
+      // Destroy existing chart if it exists
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+      
+      // Create professional candlestick chart
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            // High-Low wicks (vertical lines)
+            {
+              label: 'Wicks',
+              data: candlestickData.map(d => [d.l, d.h]),
+              backgroundColor: 'transparent',
+              borderColor: function(context) {
+                const data = candlestickData[context.dataIndex];
+                return data.c >= data.o ? '#00ff88' : '#ff4757';
+              },
+              borderWidth: 2,
+              yAxisID: 'y',
+              barPercentage: 0.02,
+              categoryPercentage: 1.0,
+              borderSkipped: false
+            },
+            // Open-Close bodies (candlestick bodies)
+            {
+              label: 'Bodies',
+              data: candlestickData.map(d => [d.o, d.c]),
+              backgroundColor: function(context) {
+                const data = candlestickData[context.dataIndex];
+                return data.c >= data.o ? '#00ff88' : '#ff4757';
+              },
+              borderColor: function(context) {
+                const data = candlestickData[context.dataIndex];
+                return data.c >= data.o ? '#00ff88' : '#ff4757';
+              },
+              borderWidth: 2,
+              yAxisID: 'y',
+              barPercentage: 0.3,
+              categoryPercentage: 0.7,
+              borderSkipped: false
+            },
+            // Volume bars at bottom
+            {
+              label: 'Volume',
+              data: candlestickData.map(d => d.v / 1000000),
+              type: 'bar',
+              backgroundColor: function(context) {
+                const data = candlestickData[context.dataIndex];
+                return data.c >= data.o ? 'rgba(0, 255, 136, 0.2)' : 'rgba(255, 71, 87, 0.2)';
+              },
+              borderColor: function(context) {
+                const data = candlestickData[context.dataIndex];
+                return data.c >= data.o ? 'rgba(0, 255, 136, 0.4)' : 'rgba(255, 71, 87, 0.4)';
+              },
+              borderWidth: 1,
+              yAxisID: 'y1',
+              barPercentage: 0.8,
+              categoryPercentage: 0.9
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: 'rgba(15, 20, 30, 0.95)',
+              titleColor: '#ffffff',
+              bodyColor: '#ffffff',
+              borderColor: 'rgba(0, 255, 136, 0.3)',
+              borderWidth: 1,
+              padding: 12,
+              displayColors: true,
+              titleFont: {
+                family: '"DM Mono", monospace',
+                size: 12,
+                weight: 'bold'
+              },
+              bodyFont: {
+                family: '"DM Mono", monospace',
+                size: 11
+              },
+              callbacks: {
+                title: function(context) {
+                  return '📅 ' + context[0].label;
+                },
+                label: function(context) {
+                  if (context.datasetIndex === 1) {
+                    // Candlestick data
+                    const data = candlestickData[context.dataIndex];
+                    const change = data.c - data.o;
+                    const changePercent = (change / data.o) * 100;
+                    const changeColor = change >= 0 ? '#00ff88' : '#ff4757';
+                    const changeSymbol = change >= 0 ? '▲' : '▼';
+                    
+                    return [
+                      `Open:  $${data.o.toFixed(2)}`,
+                      `High:  $${data.h.toFixed(2)}`,
+                      `Low:   $${data.l.toFixed(2)}`,
+                      `Close: $${data.c.toFixed(2)}`,
+                      `Change: ${changeSymbol} ${Math.abs(change).toFixed(2)} (${Math.abs(changePercent).toFixed(2)}%)`
+                    ];
+                  } else if (context.datasetIndex === 2) {
+                    // Volume data
+                    return `📊 Volume: ${context.parsed.y.toFixed(1)}M`;
+                  }
+                  return null;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.05)',
+                drawBorder: false,
+                lineWidth: 1
+              },
+              ticks: {
+                color: 'rgba(255, 255, 255, 0.6)',
+                font: {
+                  family: '"DM Mono", monospace',
+                  size: 10,
+                  weight: '500'
+                },
+                maxTicksLimit: 10,
+                callback: function(value, index) {
+                  const label = this.getLabelForValue(value);
+                  if (label) {
+                    const date = new Date(label);
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  }
+                  return label;
+                }
+              }
+            },
+            y: {
+              stacked: true,
+              type: 'linear',
+              display: true,
+              position: 'left',
+              grid: {
+                color: 'rgba(255, 255, 255, 0.05)',
+                drawBorder: false,
+                lineWidth: 1
+              },
+              ticks: {
+                color: 'rgba(255, 255, 255, 0.6)',
+                font: {
+                  family: '"DM Mono", monospace',
+                  size: 10,
+                  weight: '500'
+                },
+                callback: function(value) {
+                  return '$' + value.toFixed(0);
+                },
+                padding: 8
+              }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              grid: {
+                drawOnChartArea: false,
+              },
+              ticks: {
+                color: 'rgba(255, 255, 255, 0.4)',
+                font: {
+                  family: '"DM Mono", monospace',
+                  size: 9,
+                  weight: '500'
+                },
+                callback: function(value) {
+                  return value.toFixed(0) + 'M';
+                },
+                padding: 8
+              }
+            }
+          },
+          layout: {
+            padding: {
+              top: 20,
+              right: 20,
+              bottom: 10,
+              left: 10
+            }
+          }
+        }
+      });
+      
+      console.log('📈 Professional OHLCV Candlestick chart initialized');
+      console.log('�️ Candlestick data points:', candlestickData.length);
+      console.log('� Latest candle:', candlestickData[candlestickData.length - 1]);
+    }
+
+    // Load real data and draw chart
+    async function loadChartWithRealData(symbol = 'AAPL') {
+      console.log('🔄 Loading chart with real data for', symbol);
+      
+      // Update status
+      const statusElement = document.getElementById('dataSource');
+      if (statusElement) {
+        statusElement.textContent = 'Fetching data...';
+        statusElement.style.color = '#f5a623';
+      }
+      
+      // Try to fetch real data first
+      const hasRealData = await fetchRealTimeData(symbol);
+      
+      if (hasRealData) {
+        console.log('✅ Real data loaded successfully');
+        if (statusElement) {
+          statusElement.textContent = 'Live Data';
+          statusElement.style.color = '#00dc82';
+        }
+      } else {
+        console.log('🎲 Using dynamic simulated data');
+        if (statusElement) {
+          statusElement.textContent = 'Dynamic Data';
+          statusElement.style.color = '#00dc82';
+        }
+      }
+      
+      // Initialize the chart
+      initializeChart();
+      
+      // Start live updates for dynamic feel
+      if (!hasRealData) {
+        startLiveUpdates();
+      }
+    }
+    
+    // Refresh chart data
+    async function refreshChartData() {
+      console.log('🔄 Refreshing chart data...');
+      const refreshBtn = document.querySelector('.refresh-btn');
+      if (refreshBtn) {
+        refreshBtn.textContent = '⏳ Loading...';
+        refreshBtn.disabled = true;
+      }
+      
+      // Clear current data to force refresh
+      realTimeData = {
+        ohlcv: [],
+        symbol: 'AAPL',
+        currentPrice: 0,
+        priceChange: 0,
+        percentChange: 0
+      };
+      
+      await loadChartWithRealData('AAPL');
+      
+      if (refreshBtn) {
+        refreshBtn.textContent = '🔄 Refresh';
+        refreshBtn.disabled = false;
+      }
+    }
+    
+    // Timeframe functions
+    async function changeTimeframe(timeframe) {
+      document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Reload data for new timeframe
+      await loadChartWithRealData(realTimeData.symbol || 'AAPL');
+    }
+    
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const cursorRing = document.getElementById('cursorRing');
+    
+    if (cursor && cursorRing) {
+      document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+        cursorRing.style.left = e.clientX + 'px';
+        cursorRing.style.top = e.clientY + 'px';
+      });
+      
+      document.addEventListener('mouseleave', () => {
+        cursor.style.opacity = '0';
+        cursorRing.style.opacity = '0';
+      });
+      
+      document.addEventListener('mouseenter', () => {
+        cursor.style.opacity = '1';
+        cursorRing.style.opacity = '1';
+      });
+    }
+    
+    // Initialize chart when page loads
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        loadChartWithRealData('AAPL');
+      }, 100);
+    });
+    
+    // Redraw chart on window resize
+    window.addEventListener('resize', () => {
+      if (chartInstance) {
+        chartInstance.resize();
+      }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Simulator - Learn by Practice | ALPHA</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020b12;
+    --surface: #061520;
+    --border: rgba(0, 220, 130, 0.15);
+    --green: #00dc82;
+    --green-dim: rgba(0, 220, 130, 0.08);
+    --amber: #f5a623;
+    --red: #ff4a6e;
+    --text: #e8f4f0;
+    --muted: rgba(232, 244, 240, 0.45);
+    --mono: 'DM Mono', monospace;
+    --yellow: #FFE600;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 12px; height: 12px; background: var(--green); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: transform 0.15s ease; mix-blend-mode: screen; }
+  .cursor-ring { width: 36px; height: 36px; border: 1px solid rgba(0,220,130,0.4); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); opacity:0.6; pointer-events:none; z-index:1000; }
+
+  /* NAV */
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:24px 60px; background:linear-gradient(to bottom,rgba(2,11,18,0.95),transparent); backdrop-filter:blur(2px); }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:var(--text); display:flex; align-items:center; gap:10px; cursor:none; }
+  .logo-dot { width:8px; height:8px; background:var(--green); border-radius:50%; box-shadow:0 0 16px var(--green); animation:pulse 2s infinite; }
+  .nav-links { display:flex; gap:40px; list-style:none; }
+  .nav-links a { font-size:12px; font-weight:300; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.3s; }
+  .nav-links a:hover { color:var(--green); }
+  .nav-cta { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:10px 24px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; transition:all 0.3s; }
+  .nav-cta:hover { background:var(--green); color:var(--bg); }
+
+  /* Level Selection */
+  .level-selection { padding:120px 60px 80px; max-width:1400px; margin:0 auto; }
+  .level-header { text-align:center; margin-bottom:60px; }
+  .level-breadcrumb { font-family:var(--mono); font-size:11px; color:var(--muted); margin-bottom:20px; }
+  .level-breadcrumb a { color:var(--green); text-decoration:none; }
+  .level-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,6vw,80px); letter-spacing:2px; line-height:1; margin-bottom:20px; }
+  .level-subtitle { font-size:16px; font-weight:300; color:var(--muted); line-height:1.8; max-width:600px; margin:0 auto; }
+
+  .level-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(350px,1fr)); gap:30px; margin-bottom:60px; }
+  .level-card { background:var(--surface); border:1px solid var(--border); padding:40px; border-radius:16px; text-align:center; transition:all 0.3s; cursor:none; position:relative; overflow:hidden; }
+  .level-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--green),var(--amber)); }
+  .level-card:hover { transform:translateY(-5px); border-color:var(--green); box-shadow:0 20px 40px rgba(0,220,130,0.1); }
+  .level-icon { font-size:48px; margin-bottom:20px; }
+  .level-name { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; margin-bottom:10px; }
+  .level-balance { font-family:var(--mono); font-size:24px; color:var(--green); margin-bottom:20px; }
+  .level-description { font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:30px; }
+  .level-features { text-align:left; margin-bottom:30px; }
+  .level-feature { display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:13px; }
+  .feature-icon { color:var(--green); }
+  .level-btn { font-family:var(--mono); font-size:14px; letter-spacing:1px; padding:14px 32px; background:var(--green); color:var(--bg); border:none; cursor:none; font-weight:600; transition:all 0.3s; border-radius:8px; width:100%; }
+  .level-btn:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,220,130,0.3); }
+
+  /* Trading Interface */
+  .trading-interface { padding:120px 60px 80px; max-width:1400px; margin:0 auto; display:none; }
+  .trading-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; }
+  .account-info { display:flex; gap:30px; align-items:center; }
+  .account-balance { background:var(--surface); border:1px solid var(--border); padding:20px 30px; border-radius:12px; }
+  .balance-label { font-family:var(--mono); font-size:12px; color:var(--muted); margin-bottom:5px; }
+  .balance-amount { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--green); }
+  .pnl-amount { font-family:var(--mono); font-size:16px; margin-top:5px; }
+  .pnl-amount.positive { color:var(--green); }
+  .pnl-amount.negative { color:var(--red); }
+
+  .trading-main { display:grid; grid-template-columns:1fr 400px; gap:30px; }
+  .market-section { background:var(--surface); border:1px solid var(--border); padding:30px; border-radius:12px; }
+  .section-title { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; margin-bottom:20px; }
+
+  .stock-list { max-height:400px; overflow-y:auto; }
+  .stock-item { display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid var(--border); transition:all 0.3s; cursor:none; }
+  .stock-item:hover { background:var(--green-dim); }
+  .stock-info { flex:1; }
+  .stock-symbol { font-family:var(--mono); font-size:14px; font-weight:600; color:var(--text); }
+  .stock-name { font-size:12px; color:var(--muted); }
+  .stock-price { font-family:var(--mono); font-size:16px; color:var(--text); }
+  .stock-change { font-family:var(--mono); font-size:12px; }
+  .stock-change.positive { color:var(--green); }
+  .stock-change.negative { color:var(--red); }
+
+  .trading-panel { background:var(--surface); border:1px solid var(--border); padding:30px; border-radius:12px; }
+  .selected-stock { background:var(--green-dim); padding:15px; border-radius:8px; margin-bottom:20px; }
+  .selected-name { font-family:var(--mono); font-size:14px; font-weight:600; margin-bottom:5px; }
+  .selected-price { font-size:20px; color:var(--green); margin-bottom:5px; }
+  .selected-change { font-family:var(--mono); font-size:12px; }
+
+  .trade-form { margin-bottom:20px; }
+  .form-group { margin-bottom:15px; }
+  .form-label { font-family:var(--mono); font-size:12px; color:var(--muted); margin-bottom:5px; display:block; }
+  .form-input { width:100%; padding:12px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:var(--mono); font-size:14px; }
+  .form-input:focus { outline:none; border-color:var(--green); }
+
+  .trade-buttons { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .btn-buy { background:var(--green); color:var(--bg); }
+  .btn-sell { background:var(--red); color:var(--text); }
+  .trade-btn { font-family:var(--mono); font-size:14px; font-weight:600; padding:12px; border:none; cursor:none; transition:all 0.3s; border-radius:6px; }
+  .trade-btn:hover { transform:translateY(-2px); opacity:0.9; }
+
+  .portfolio-section { background:var(--surface); border:1px solid var(--border); padding:30px; border-radius:12px; margin-top:30px; }
+  .position-item { display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid var(--border); }
+  .position-info { flex:1; }
+  .position-symbol { font-family:var(--mono); font-size:14px; font-weight:600; }
+  .position-shares { font-size:12px; color:var(--muted); }
+  .position-pnl { font-family:var(--mono); font-size:14px; text-align:right; }
+  .position-pnl.positive { color:var(--green); }
+  .position-pnl.negative { color:var(--red); }
+
+  /* Learning Feedback */
+  .feedback-popup { position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--surface); border:1px solid var(--border); padding:30px; border-radius:12px; z-index:1000; display:none; max-width:400px; }
+  .feedback-title { font-family:'Bebas Neue',sans-serif; font-size:24px; margin-bottom:15px; }
+  .feedback-message { font-size:14px; line-height:1.6; color:var(--muted); margin-bottom:20px; }
+  .feedback-btn { font-family:var(--mono); font-size:12px; padding:10px 20px; background:var(--green); color:var(--bg); border:none; cursor:none; border-radius:6px; }
+
+  /* Animations */
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  @keyframes slideIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .level-card { animation:slideIn 0.6s ease forwards; }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="window.location.href='index.html'" style="cursor:none;">
+    <div class="logo-dot"></div>
+    ALPHA
+  </div>
+  <ul class="nav-links">
+    <li><a href="learning-module.html" class="active-nav">Learning Module</a></li>
+    <li><a href="alpha-rush.html">Alpha Rush</a></li>
+    <li><a href="market-analyzer.html">Market Analyzer</a></li>
+    <li><a href="portfolio-analyzer.html">Portfolio Analyzer</a></li>
+    <li><a href="news-intelligence.html">News Intelligence</a></li>
+  </ul>
+  <button class="nav-cta" onclick="resetSimulator()">RESET SIMULATOR</button>
+</nav>
+
+<!-- LEVEL SELECTION -->
+<div class="level-selection" id="levelSelection">
+  <div class="level-header">
+    <div class="level-breadcrumb">
+      <a href="learning-module.html">Learning Modules</a> → Trading Simulator
+    </div>
+    <h1 class="level-title">TRADING <em>SIMULATOR</em></h1>
+    <p class="level-subtitle">Practice trading with virtual money in a risk-free environment. Learn from your mistakes without losing real capital. Choose your skill level and start trading!</p>
+  </div>
+
+  <div class="level-grid">
+    <div class="level-card" onclick="startTrading('beginner')">
+      <div class="level-icon">🌱</div>
+      <h3 class="level-name">BEGINNER</h3>
+      <div class="level-balance">$2,000</div>
+      <p class="level-description">Perfect for those new to trading. Learn the basics with a smaller account and simplified interface.</p>
+      <div class="level-features">
+        <div class="level-feature">
+          <span class="feature-icon">✓</span>
+          <span>5 popular stocks to trade</span>
+        </div>
+        <div class="level-feature">
+          <span class="feature-icon">✓</span>
+          <span>Basic buy/sell orders only</span>
+        </div>
+        <div class="level-feature">
+          <span class="feature-icon">✓</span>
+          <span>Learning tips and guidance</span>
+        </div>
+        <div class="level-feature">
+          <span class="feature-icon">✓</span>
+          <span>Mistake prevention alerts</span>
+        </div>
+      </div>
+      <button class="level-btn">START TRADING</button>
+    </div>
+
+    <div class="level-card" onclick="startTrading('intermediate')">
+      <div class="level-icon">🚀</div>
+      <h3 class="level-name">INTERMEDIATE</h3>
+      <div class="level-balance">$5,000</div>
+      <p class="level-description">Ready for more challenge? Trade more stocks with advanced features and realistic market conditions.</p>
+      <div class="level-features">
+        <div class="level-feature">
+          <span class="feature-icon">✓</span>
+          <span>15+ stocks to choose from</span>
+        </div>
+        <div class="level-feature">
+          <span class="feature-icon">✓</span>
+          <span>Market and limit orders</span>
+        </div>
+        <div class="level-feature">
+          <span class="feature-icon">✓</span>
+          <span>Basic portfolio analytics</span>
+        </div>
+        <div class="level-feature">
+          <span class="feature-icon">✓</span>
+          <span>Risk management tools</span>
+        </div>
+      </div>
+      <button class="level-btn">START TRADING</button>
+    </div>
+
+    <div class="level-card" onclick="startTrading('advanced')">
+      <div class="level-icon">🏆</div>
+      <h3 class="level-name">ADVANCED</h3>
+      <div class="level-balance">$10,000</div>
+      <p class="level-description">Test your skills with professional trading tools. Experience realistic market volatility and advanced strategies.</p>
+      <div class="level-features">
+        <div class="level-feature">
+          <span class="feature-icon">✓</span>
+          <span>30+ stocks including ETFs</span>
+        </div>
+        <div class="level-feature">
+          <span class="feature-icon">✓</span>
+          <span>Advanced order types</span>
+        </div>
+        <div class="level-feature">
+          <span class="feature-icon">✓</span>
+          <span>Short selling enabled</span>
+        </div>
+        <div class="level-feature">
+          <span class="feature-icon">✓</span>
+          <span>Advanced analytics & insights</span>
+        </div>
+      </div>
+      <button class="level-btn">START TRADING</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRADING INTERFACE -->
+<div class="trading-interface" id="tradingInterface">
+  <div class="trading-header">
+    <div class="account-info">
+      <div class="account-balance">
+        <div class="balance-label">ACCOUNT BALANCE</div>
+        <div class="balance-amount" id="accountBalance">$0.00</div>
+        <div class="pnl-amount" id="totalPnL">P&L: $0.00</div>
+      </div>
+      <div class="account-balance">
+        <div class="balance-label">SKILL LEVEL</div>
+        <div class="balance-amount" id="skillLevel" style="font-size:20px;">BEGINNER</div>
+        <div class="pnl-amount" id="tradeCount">Trades: 0</div>
+      </div>
+    </div>
+    <button class="nav-cta" onclick="showLevelSelection()">CHANGE LEVEL</button>
+  </div>
+
+  <div class="trading-main">
+    <div class="left-panel">
+      <div class="market-section">
+        <h3 class="section-title">AVAILABLE STOCKS</h3>
+        <div class="stock-list" id="stockList">
+          <!-- Stocks will be populated here -->
+        </div>
+      </div>
+
+      <div class="portfolio-section">
+        <h3 class="section-title">YOUR PORTFOLIO</h3>
+        <div id="portfolioList">
+          <!-- Portfolio positions will be shown here -->
+        </div>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <div class="trading-panel">
+        <h3 class="section-title">PLACE ORDER</h3>
+        <div class="selected-stock" id="selectedStock">
+          <div class="selected-name">Select a stock to trade</div>
+          <div class="selected-price">-</div>
+          <div class="selected-change">-</div>
+        </div>
+
+        <div class="trade-form">
+          <div class="form-group">
+            <label class="form-label">QUANTITY</label>
+            <input type="number" class="form-input" id="quantityInput" placeholder="0" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ORDER TYPE</label>
+            <select class="form-input" id="orderType">
+              <option value="market">Market Order</option>
+              <option value="limit">Limit Order (Intermediate+)</option>
+            </select>
+          </div>
+          <div class="form-group" id="limitPriceGroup" style="display:none;">
+            <label class="form-label">LIMIT PRICE</label>
+            <input type="number" class="form-input" id="limitPriceInput" placeholder="0.00" step="0.01">
+          </div>
+        </div>
+
+        <div class="trade-buttons">
+          <button class="trade-btn btn-buy" onclick="placeOrder('buy')">BUY</button>
+          <button class="trade-btn btn-sell" onclick="placeOrder('sell')">SELL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FEEDBACK POPUP -->
+<div class="feedback-popup" id="feedbackPopup">
+  <h3 class="feedback-title" id="feedbackTitle">Trading Tip</h3>
+  <p class="feedback-message" id="feedbackMessage">Message here</p>
+  <button class="feedback-btn" onclick="closeFeedback()">GOT IT</button>
+</div>
+
+<script src="api-client.js"></script>
+  <script>
+  // Simulator State
+  let simulatorState = {
+    level: null,
+    balance: 0,
+    initialBalance: 0,
+    portfolio: {},
+    trades: [],
+    selectedStock: null,
+    stockPrices: {},
+    tradeCount: 0
+  };
+
+  // Stock data for different levels
+  const stockData = {
+    beginner: [
+      { symbol: 'AAPL', name: 'Apple Inc.', price: 175.50, change: 2.30 },
+      { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 142.80, change: -1.20 },
+      { symbol: 'MSFT', name: 'Microsoft Corp.', price: 380.25, change: 3.15 },
+      { symbol: 'TSLA', name: 'Tesla Inc.', price: 245.60, change: -5.40 },
+      { symbol: 'AMZN', name: 'Amazon.com Inc.', price: 155.30, change: 1.80 }
+    ],
+    intermediate: [
+      { symbol: 'AAPL', name: 'Apple Inc.', price: 175.50, change: 2.30 },
+      { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 142.80, change: -1.20 },
+      { symbol: 'MSFT', name: 'Microsoft Corp.', price: 380.25, change: 3.15 },
+      { symbol: 'TSLA', name: 'Tesla Inc.', price: 245.60, change: -5.40 },
+      { symbol: 'AMZN', name: 'Amazon.com Inc.', price: 155.30, change: 1.80 },
+      { symbol: 'META', name: 'Meta Platforms', price: 485.20, change: 4.60 },
+      { symbol: 'NVDA', name: 'NVIDIA Corp.', price: 875.40, change: 12.30 },
+      { symbol: 'JPM', name: 'JPMorgan Chase', price: 195.80, change: -0.90 },
+      { symbol: 'V', name: 'Visa Inc.', price: 275.60, change: 1.20 },
+      { symbol: 'JNJ', name: 'Johnson & Johnson', price: 165.40, change: -0.30 },
+      { symbol: 'WMT', name: 'Walmart Inc.', price: 165.90, change: 0.80 },
+      { symbol: 'PG', name: 'Procter & Gamble', price: 155.20, change: -0.60 },
+      { symbol: 'MA', name: 'Mastercard', price: 485.30, change: 2.10 },
+      { symbol: 'UNH', name: 'UnitedHealth', price: 525.80, change: -3.20 },
+      { symbol: 'HD', name: 'Home Depot', price: 355.60, change: 1.90 }
+    ],
+    advanced: [
+      // Include all intermediate stocks plus more
+      { symbol: 'AAPL', name: 'Apple Inc.', price: 175.50, change: 2.30 },
+      { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 142.80, change: -1.20 },
+      { symbol: 'MSFT', name: 'Microsoft Corp.', price: 380.25, change: 3.15 },
+      { symbol: 'TSLA', name: 'Tesla Inc.', price: 245.60, change: -5.40 },
+      { symbol: 'AMZN', name: 'Amazon.com Inc.', price: 155.30, change: 1.80 },
+      { symbol: 'META', name: 'Meta Platforms', price: 485.20, change: 4.60 },
+      { symbol: 'NVDA', name: 'NVIDIA Corp.', price: 875.40, change: 12.30 },
+      { symbol: 'JPM', name: 'JPMorgan Chase', price: 195.80, change: -0.90 },
+      { symbol: 'V', name: 'Visa Inc.', price: 275.60, change: 1.20 },
+      { symbol: 'JNJ', name: 'Johnson & Johnson', price: 165.40, change: -0.30 },
+      { symbol: 'WMT', name: 'Walmart Inc.', price: 165.90, change: 0.80 },
+      { symbol: 'PG', name: 'Procter & Gamble', price: 155.20, change: -0.60 },
+      { symbol: 'MA', name: 'Mastercard', price: 485.30, change: 2.10 },
+      { symbol: 'UNH', name: 'UnitedHealth', price: 525.80, change: -3.20 },
+      { symbol: 'HD', name: 'Home Depot', price: 355.60, change: 1.90 },
+      { symbol: 'SPY', name: 'S&P 500 ETF', price: 485.20, change: 2.40 },
+      { symbol: 'QQQ', name: 'NASDAQ ETF', price: 425.80, change: 3.10 },
+      { symbol: 'BTC', name: 'Bitcoin', price: 45250.00, change: 1250.00 },
+      { symbol: 'ETH', name: 'Ethereum', price: 2450.00, change: -85.00 },
+      { symbol: 'GLD', name: 'Gold ETF', price: 185.60, change: -0.40 },
+      { symbol: 'SLV', name: 'Silver ETF', price: 22.80, change: 0.15 },
+      { symbol: 'OIL', name: 'Crude Oil ETF', price: 78.50, change: 1.20 },
+      { symbol: 'TLT', name: '20+ Year Treasury', price: 95.80, change: -0.60 },
+      { symbol: 'HYG', name: 'High Yield Bonds', price: 75.20, change: 0.30 },
+      { symbol: 'VNQ', name: 'Real Estate ETF', price: 85.60, change: -1.20 },
+      { symbol: 'XLF', name: 'Financial ETF', price: 35.80, change: 0.90 },
+      { symbol: 'XLK', name: 'Technology ETF', price: 225.40, change: 3.60 },
+      { symbol: 'XLE', name: 'Energy ETF', price: 85.20, change: 2.10 },
+      { symbol: 'XLU', name: 'Utilities ETF', price: 55.60, change: -0.80 },
+      { symbol: 'XLV', name: 'Healthcare ETF', price: 145.80, change: 1.40 }
+    ]
+  };
+
+  // Learning feedback messages
+  const learningTips = {
+    beginner: {
+      firstBuy: "Great! You've made your first purchase. Remember to diversify your portfolio and don't put all your money in one stock.",
+      bigPosition: "That's a large position! Consider position sizing - never risk more than 10-20% of your account on a single trade.",
+      noDiversification: "You're heavily concentrated in one stock. Consider diversifying across different sectors to reduce risk.",
+      sellingLoss: "It's okay to take losses! Professional traders cut losses quickly and let winners run.",
+      sellingProfit: "Congratulations on taking profits! Remember to have a plan for when to sell before you buy."
+    },
+    intermediate: {
+      limitOrder: "Good use of limit orders! They help you control the price you pay and improve your risk management.",
+      portfolioBalance: "Your portfolio is well-balanced. Consider rebalancing periodically to maintain your target allocation.",
+      overtrading: "You're making frequent trades. Remember that commission costs can add up. Focus on quality over quantity."
+    },
+    advanced: {
+      shortSelling: "Short selling involves unlimited risk. Always use stop-loss orders when shorting stocks.",
+      volatility: "The market is volatile today. Consider reducing position sizes during high volatility periods.",
+      etfStrategy: "ETFs are great for diversification. Consider using them as core portfolio holdings."
+    }
+  };
+
+  // Initialize simulator
+  function initSimulator() {
+    loadSimulatorState();
+    if (simulatorState.level) {
+      showTradingInterface();
+    }
+  }
+
+  // Start trading at selected level
+  function startTrading(level) {
+    const balances = {
+      beginner: 2000,
+      intermediate: 5000,
+      advanced: 10000
+    };
+
+    simulatorState = {
+      level: level,
+      balance: balances[level],
+      initialBalance: balances[level],
+      portfolio: {},
+      trades: [],
+      selectedStock: null,
+      stockPrices: {},
+      tradeCount: 0
+    };
+
+    // Initialize stock prices
+    stockData[level].forEach(stock => {
+      simulatorState.stockPrices[stock.symbol] = stock.price;
+    });
+
+    saveSimulatorState();
+    showTradingInterface();
+    showFeedback('Welcome to ' + level.toUpperCase() + ' Trading!', 'You have $' + balances[level].toLocaleString() + ' to start trading. Remember to start small and learn from each trade!');
+  }
+
+  // Show trading interface
+  function showTradingInterface() {
+    document.getElementById('levelSelection').style.display = 'none';
+    document.getElementById('tradingInterface').style.display = 'block';
+    
+    updateAccountInfo();
+    loadStockList();
+    updatePortfolio();
+    
+    // Start price updates
+    setInterval(updatePrices, 3000); // Update every 3 seconds
+  }
+
+  // Show level selection
+  function showLevelSelection() {
+    document.getElementById('levelSelection').style.display = 'block';
+    document.getElementById('tradingInterface').style.display = 'none';
+  }
+
+  // Load stock list
+  function loadStockList() {
+    const stockList = document.getElementById('stockList');
+    const stocks = stockData[simulatorState.level];
+    
+    stockList.innerHTML = stocks.map(stock => `
+      <div class="stock-item" onclick="selectStock('${stock.symbol}')">
+        <div class="stock-info">
+          <div class="stock-symbol">${stock.symbol}</div>
+          <div class="stock-name">${stock.name}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="stock-price">$${simulatorState.stockPrices[stock.symbol].toFixed(2)}</div>
+          <div class="stock-change ${stock.change >= 0 ? 'positive' : 'negative'}">
+            ${stock.change >= 0 ? '+' : ''}${stock.change.toFixed(2)} (${((stock.change / (stock.price - stock.change)) * 100).toFixed(2)}%)
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Select stock for trading
+  function selectStock(symbol) {
+    const stock = stockData[simulatorState.level].find(s => s.symbol === symbol);
+    simulatorState.selectedStock = stock;
+    
+    const selectedDiv = document.getElementById('selectedStock');
+    selectedDiv.innerHTML = `
+      <div class="selected-name">${stock.symbol} - ${stock.name}</div>
+      <div class="selected-price">$${simulatorState.stockPrices[stock.symbol].toFixed(2)}</div>
+      <div class="selected-change ${stock.change >= 0 ? 'positive' : 'negative'}">
+        ${stock.change >= 0 ? '+' : ''}${stock.change.toFixed(2)} (${((stock.change / (stock.price - stock.change)) * 100).toFixed(2)}%)
+      </div>
+    `;
+  }
+
+  // Place order
+  function placeOrder(type) {
+    if (!simulatorState.selectedStock) {
+      showFeedback('No Stock Selected', 'Please select a stock from the list before placing an order.');
+      return;
+    }
+
+    const quantity = parseInt(document.getElementById('quantityInput').value);
+    const orderType = document.getElementById('orderType').value;
+    
+    if (!quantity || quantity <= 0) {
+      showFeedback('Invalid Quantity', 'Please enter a valid quantity greater than 0.');
+      return;
+    }
+
+    const stock = simulatorState.selectedStock;
+    const price = simulatorState.stockPrices[stock.symbol];
+    const totalCost = quantity * price;
+
+    if (type === 'buy') {
+      if (totalCost > simulatorState.balance) {
+        showFeedback('Insufficient Funds', 'You don\'t have enough balance for this purchase. Available: $' + simulatorState.balance.toFixed(2));
+        return;
+      }
+
+      // Execute buy
+      simulatorState.balance -= totalCost;
+      if (!simulatorState.portfolio[stock.symbol]) {
+        simulatorState.portfolio[stock.symbol] = { shares: 0, avgPrice: 0 };
+      }
+      
+      const position = simulatorState.portfolio[stock.symbol];
+      const totalShares = position.shares + quantity;
+      const totalValue = (position.shares * position.avgPrice) + totalCost;
+      position.avgPrice = totalValue / totalShares;
+      position.shares = totalShares;
+
+      simulatorState.tradeCount++;
+      showFeedback('Order Executed', `Bought ${quantity} shares of ${stock.symbol} at $${price.toFixed(2)}`);
+      
+      // Learning feedback for beginners
+      if (simulatorState.level === 'beginner' && simulatorState.tradeCount === 1) {
+        setTimeout(() => showFeedback('First Trade!', learningTips.beginner.firstBuy), 2000);
+      }
+
+    } else if (type === 'sell') {
+      if (!simulatorState.portfolio[stock.symbol] || simulatorState.portfolio[stock.symbol].shares < quantity) {
+        showFeedback('Insufficient Shares', 'You don\'t have enough shares to sell.');
+        return;
+      }
+
+      // Execute sell
+      const position = simulatorState.portfolio[stock.symbol];
+      const proceeds = quantity * price;
+      const costBasis = quantity * position.avgPrice;
+      const pnl = proceeds - costBasis;
+      
+      simulatorState.balance += proceeds;
+      position.shares -= quantity;
+      
+      if (position.shares === 0) {
+        delete simulatorState.portfolio[stock.symbol];
+      }
+
+      simulatorState.tradeCount++;
+      
+      if (pnl >= 0) {
+        showFeedback('Profit Taken!', `Sold ${quantity} shares of ${stock.symbol} at $${price.toFixed(2)}. Profit: $${pnl.toFixed(2)}`);
+        if (simulatorState.level === 'beginner') {
+          setTimeout(() => showFeedback('Great Job!', learningTips.beginner.sellingProfit), 2000);
+        }
+      } else {
+        showFeedback('Loss Taken', `Sold ${quantity} shares of ${stock.symbol} at $${price.toFixed(2)}. Loss: $${Math.abs(pnl).toFixed(2)}`);
+        if (simulatorState.level === 'beginner') {
+          setTimeout(() => showFeedback('Learning Experience', learningTips.beginner.sellingLoss), 2000);
+        }
+      }
+    }
+
+    // Clear form
+    document.getElementById('quantityInput').value = '';
+    
+    saveSimulatorState();
+    updateAccountInfo();
+    updatePortfolio();
+    loadStockList();
+  }
+
+  // Update stock prices (simulate market movement)
+  function updatePrices() {
+    const stocks = stockData[simulatorState.level];
+    
+    stocks.forEach(stock => {
+      // Random price movement between -2% and +2%
+      const changePercent = (Math.random() - 0.5) * 0.04;
+      const currentPrice = simulatorState.stockPrices[stock.symbol];
+      const newPrice = currentPrice * (1 + changePercent);
+      const priceChange = newPrice - currentPrice;
+      
+      simulatorState.stockPrices[stock.symbol] = newPrice;
+      stock.price = newPrice;
+      stock.change = priceChange;
+    });
+    
+    loadStockList();
+    updateAccountInfo();
+    updatePortfolio();
+  }
+
+  // Update account information
+  function updateAccountInfo() {
+    document.getElementById('accountBalance').textContent = '$' + simulatorState.balance.toFixed(2);
+    document.getElementById('skillLevel').textContent = simulatorState.level.toUpperCase();
+    document.getElementById('tradeCount').textContent = 'Trades: ' + simulatorState.tradeCount;
+    
+    // Calculate total P&L
+    let totalValue = simulatorState.balance;
+    for (const symbol in simulatorState.portfolio) {
+      const position = simulatorState.portfolio[symbol];
+      const currentPrice = simulatorState.stockPrices[symbol];
+      totalValue += position.shares * currentPrice;
+    }
+    
+    const totalPnL = totalValue - simulatorState.initialBalance;
+    const pnlElement = document.getElementById('totalPnL');
+    pnlElement.textContent = 'P&L: $' + totalPnL.toFixed(2);
+    pnlElement.className = 'pnl-amount ' + (totalPnL >= 0 ? 'positive' : 'negative');
+  }
+
+  // Update portfolio display
+  function updatePortfolio() {
+    const portfolioList = document.getElementById('portfolioList');
+    
+    if (Object.keys(simulatorState.portfolio).length === 0) {
+      portfolioList.innerHTML = '<div style="text-align:center; color:var(--muted); padding:20px;">No positions yet. Start trading to build your portfolio!</div>';
+      return;
+    }
+    
+    let portfolioHTML = '';
+    for (const symbol in simulatorState.portfolio) {
+      const position = simulatorState.portfolio[symbol];
+      const currentPrice = simulatorState.stockPrices[symbol];
+      const marketValue = position.shares * currentPrice;
+      const costBasis = position.shares * position.avgPrice;
+      const pnl = marketValue - costBasis;
+      const pnlPercent = ((pnl / costBasis) * 100).toFixed(2);
+      
+      const stock = stockData[simulatorState.level].find(s => s.symbol === symbol);
+      
+      portfolioHTML += `
+        <div class="position-item">
+          <div class="position-info">
+            <div class="position-symbol">${symbol}</div>
+            <div class="position-shares">${position.shares} shares @ $${position.avgPrice.toFixed(2)}</div>
+          </div>
+          <div class="position-pnl ${pnl >= 0 ? 'positive' : 'negative'}">
+            <div>$${marketValue.toFixed(2)}</div>
+            <div style="font-size:11px;">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnlPercent}%)</div>
+          </div>
+        </div>
+      `;
+    }
+    
+    portfolioList.innerHTML = portfolioHTML;
+  }
+
+  // Show feedback popup
+  function showFeedback(title, message) {
+    document.getElementById('feedbackTitle').textContent = title;
+    document.getElementById('feedbackMessage').textContent = message;
+    document.getElementById('feedbackPopup').style.display = 'block';
+  }
+
+  // Close feedback popup
+  function closeFeedback() {
+    document.getElementById('feedbackPopup').style.display = 'none';
+  }
+
+  // Reset simulator
+  function resetSimulator() {
+    if (confirm('Are you sure you want to reset the simulator? All progress will be lost.')) {
+      localStorage.removeItem('tradingSimulator_state');
+      simulatorState = {
+        level: null,
+        balance: 0,
+        initialBalance: 0,
+        portfolio: {},
+        trades: [],
+        selectedStock: null,
+        stockPrices: {},
+        tradeCount: 0
+      };
+      showLevelSelection();
+    }
+  }
+
+  // Save simulator state
+  function saveSimulatorState() {
+    localStorage.setItem('tradingSimulator_state', JSON.stringify(simulatorState));
+  }
+
+  // Load simulator state
+  function loadSimulatorState() {
+    const saved = localStorage.getItem('tradingSimulator_state');
+    if (saved) {
+      simulatorState = JSON.parse(saved);
+    }
+  }
+
+  // Handle order type change
+  document.getElementById('orderType').addEventListener('change', function() {
+    const limitPriceGroup = document.getElementById('limitPriceGroup');
+    if (this.value === 'limit' && simulatorState.level !== 'beginner') {
+      limitPriceGroup.style.display = 'block';
+    } else {
+      limitPriceGroup.style.display = 'none';
+    }
+  });
+
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const cursorRing = document.getElementById('cursorRing');
+
+  document.addEventListener('mousemove', (e) => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    cursorRing.style.left = e.clientX + 'px';
+    cursorRing.style.top = e.clientY + 'px';
+  });
+
+  document.addEventListener('mousedown', () => {
+    cursor.style.transform = 'scale(0.8)';
+    cursorRing.style.transform = 'scale(0.8)';
+  });
+
+  document.addEventListener('mouseup', () => {
+    cursor.style.transform = 'scale(1)';
+    cursorRing.style.transform = 'scale(1)';
+  });
+
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', () => {
+    initSimulator();
+  });
+</script>
+
+</body>
+</html>

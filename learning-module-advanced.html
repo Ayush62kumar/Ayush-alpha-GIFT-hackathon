@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Learning Modules | ALPHA</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020b12;
+    --surface: #061520;
+    --border: rgba(0, 220, 130, 0.15);
+    --green: #00dc82;
+    --green-dim: rgba(0, 220, 130, 0.08);
+    --amber: #f5a623;
+    --red: #ff4a6e;
+    --text: #e8f4f0;
+    --muted: rgba(232, 244, 240, 0.45);
+    --mono: 'DM Mono', monospace;
+    --yellow: #FFE600;
+    --purple: #9b59b6;
+    --purple-dim: rgba(155, 89, 182, 0.1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 12px; height: 12px; background: var(--purple); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: transform 0.15s ease; mix-blend-mode: screen; }
+  .cursor-ring { width: 36px; height: 36px; border: 1px solid rgba(155, 89, 182, 0.4); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); opacity:0.6; pointer-events:none; z-index:1000; }
+
+  /* NAV */
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:24px 60px; background:linear-gradient(to bottom,rgba(2,11,18,0.95),transparent); backdrop-filter:blur(2px); }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:var(--text); display:flex; align-items:center; gap:10px; cursor:none; }
+  .logo-dot { width:8px; height:8px; background:var(--purple); border-radius:50%; box-shadow:0 0 16px var(--purple); animation:pulse 2s infinite; }
+  .nav-links { display:flex; gap:40px; list-style:none; }
+  .nav-links a { font-size:12px; font-weight:300; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.3s; }
+  .nav-links a:hover { color:var(--purple); }
+  .nav-cta { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:10px 24px; background:transparent; border:1px solid var(--purple); color:var(--purple); cursor:none; transition:all 0.3s; }
+  .nav-cta:hover { background:var(--purple); color:var(--bg); }
+
+  /* Level Navigation */
+  .level-nav { position:fixed; top:80px; left:0; right:0; z-index:90; background:var(--surface); border-bottom:1px solid var(--border); backdrop-filter:blur(10px); }
+  .level-nav-content { max-width:1400px; margin:0 auto; padding:20px 60px; display:flex; justify-content:space-between; align-items:center; }
+  .level-title { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; color:var(--purple); }
+  .level-tabs { display:flex; gap:20px; }
+  .level-tab { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:8px 20px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:none; transition:all 0.3s; border-radius:20px; }
+  .level-tab.active { background:var(--purple); color:var(--bg); border-color:var(--purple); }
+  .level-tab:hover:not(.active) { border-color:var(--purple); color:var(--purple); }
+
+  /* Main Content */
+  .main-content { padding:180px 60px 80px; max-width:1400px; margin:0 auto; }
+  .page-header { text-align:center; margin-bottom:60px; }
+  .page-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,6vw,80px); letter-spacing:2px; line-height:1; margin-bottom:20px; }
+  .page-subtitle { font-size:16px; font-weight:300; color:var(--muted); line-height:1.8; max-width:600px; margin:0 auto; }
+
+  /* Progress Overview */
+  .progress-overview { background:var(--surface); border:1px solid var(--border); padding:40px; margin-bottom:60px; border-radius:16px; }
+  .progress-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
+  .progress-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; }
+  .progress-stats { display:flex; gap:40px; }
+  .stat-item { text-align:center; }
+  .stat-value { font-family:'Bebas Neue',sans-serif; font-size:36px; color:var(--purple); }
+  .stat-label { font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:5px; }
+  .overall-progress { height:12px; background:rgba(155, 89, 182, 0.1); border-radius:6px; overflow:hidden; margin-top:20px; }
+  .overall-progress-fill { height:100%; background:linear-gradient(90deg,var(--purple),var(--amber),var(--green)); border-radius:6px; transition:width 0.5s ease; }
+
+  /* Module Grid */
+  .modules-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:30px; margin-bottom:60px; }
+  .module-card { background:var(--surface); border:1px solid var(--border); padding:30px; border-radius:12px; transition:all 0.3s; cursor:none; position:relative; }
+  .module-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--purple),var(--amber),var(--green)); opacity:0; transition:opacity 0.3s; }
+  .module-card:hover { transform:translateY(-5px); border-color:var(--purple); box-shadow:0 20px 40px rgba(155, 89, 182, 0.1); }
+  .module-card:hover::before { opacity:1; }
+  .module-number { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--purple); margin-bottom:10px; }
+  .module-icon { font-size:32px; margin-bottom:15px; }
+  .module-title { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; margin-bottom:15px; }
+  .module-description { font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:20px; }
+  .module-features { margin-bottom:20px; }
+  .module-feature { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12px; color:var(--muted); }
+  .feature-icon { color:var(--purple); font-size:10px; }
+  .module-meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; font-family:var(--mono); font-size:11px; color:var(--muted); }
+  .module-progress-bar { margin:15px 0; }
+  .progress-track { height:6px; background:rgba(155, 89, 182, 0.1); border-radius:3px; overflow:hidden; margin-bottom:8px; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--purple),var(--amber),var(--green)); border-radius:3px; transition:width 0.5s ease; }
+  .progress-label { font-family:var(--mono); font-size:10px; color:var(--purple); }
+  .module-status { font-family:var(--mono); font-size:10px; color:var(--muted); margin-bottom:15px; }
+  .module-status.completed { color:var(--purple); }
+  .module-status.in-progress { color:var(--amber); }
+  .module-btn { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:12px 24px; background:var(--purple); color:var(--bg); border:none; cursor:none; font-weight:600; transition:all 0.3s; border-radius:8px; width:100%; }
+  .module-btn:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(155, 89, 182, 0.3); }
+  .module-btn:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; transform:none; }
+
+  /* Trading Simulator Card */
+  .simulator-card { background:linear-gradient(135deg,var(--surface),rgba(155, 89, 182, 0.05)); border:2px solid var(--purple); }
+  .simulator-card .module-icon { font-size:40px; }
+  .simulator-card .module-title { color:var(--purple); }
+
+  /* Prerequisite Badge */
+  .prerequisite-badge { position:absolute; top:10px; right:10px; background:var(--purple); color:var(--bg); font-family:var(--mono); font-size:10px; padding:4px 8px; border-radius:4px; }
+
+  /* Expert Badge */
+  .expert-badge { position:absolute; top:10px; left:10px; background:linear-gradient(45deg,var(--purple),var(--amber)); color:var(--bg); font-family:var(--mono); font-size:10px; padding:4px 8px; border-radius:4px; font-weight:600; }
+
+  /* Animations */
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  @keyframes slideIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .module-card { animation:slideIn 0.6s ease forwards; }
+  .module-card:nth-child(1) { animation-delay:0.1s; }
+  .module-card:nth-child(2) { animation-delay:0.2s; }
+  .module-card:nth-child(3) { animation-delay:0.3s; }
+  .module-card:nth-child(4) { animation-delay:0.4s; }
+  .module-card:nth-child(5) { animation-delay:0.5s; }
+  .module-card:nth-child(6) { animation-delay:0.6s; }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="window.location.href='index.html'" style="cursor:none;">
+    <div class="logo-dot"></div>
+    ALPHA
+  </div>
+  <ul class="nav-links">
+    <li><a href="learning-module.html" class="active-nav">Learning Module</a></li>
+    <li><a href="alpha-rush.html">Alpha Rush</a></li>
+    <li><a href="market-analyzer.html">Market Analyzer</a></li>
+    <li><a href="portfolio-analyzer.html">Portfolio Analyzer</a></li>
+    <li><a href="news-intelligence.html">News Intelligence</a></li>
+  </ul>
+  <button class="nav-cta" onclick="window.location.href='learning-module.html'">ALL LEVELS</button>
+</nav>
+
+<!-- LEVEL NAVIGATION -->
+<div class="level-nav">
+  <div class="level-nav-content">
+    <div class="level-title">🏆 ADVANCED LEVEL</div>
+    <div class="level-tabs">
+      <button class="level-tab" onclick="window.location.href='learning-module-beginner.html'">BEGINNER</button>
+      <button class="level-tab" onclick="window.location.href='learning-module-intermediate.html'">INTERMEDIATE</button>
+      <button class="level-tab active" onclick="window.location.href='learning-module-advanced.html'">ADVANCED</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">ADVANCED <em>LEARNING PATH</em></h1>
+    <p class="page-subtitle">Master sophisticated trading strategies, derivatives, quantitative analysis, and algorithmic trading. Become an elite trader with cutting-edge knowledge.</p>
+  </div>
+
+  <!-- Progress Overview -->
+  <div class="progress-overview">
+    <div class="progress-header">
+      <div class="progress-title">YOUR ADVANCED PROGRESS</div>
+      <div class="progress-stats">
+        <div class="stat-item">
+          <div class="stat-value" id="completedCount">0</div>
+          <div class="stat-label">MODULES COMPLETED</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="totalTime">0h</div>
+          <div class="stat-label">TIME SPENT</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="overallPercentage">0%</div>
+          <div class="stat-label">OVERALL PROGRESS</div>
+        </div>
+      </div>
+    </div>
+    <div class="overall-progress">
+      <div class="overall-progress-fill" id="overallProgressFill" style="width: 0%;"></div>
+    </div>
+  </div>
+
+  <!-- Modules Grid -->
+  <div class="modules-grid">
+    <!-- Module 1: Options & Derivatives -->
+    <div class="module-card">
+      <div class="expert-badge">EXPERT</div>
+      <div class="prerequisite-badge">INTERMEDIATE COMPLETE</div>
+      <div class="module-number">MODULE 01</div>
+      <div class="module-icon">⚙️</div>
+      <h3 class="module-title">Options & Derivatives</h3>
+      <p class="module-description">Master advanced options strategies, Greeks, and derivatives trading for sophisticated risk management and profit generation.</p>
+      <div class="module-features">
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Advanced Options Strategies</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Greeks & Risk Management</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Futures & Swaps Trading</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Volatility Trading</span>
+        </div>
+      </div>
+      <div class="module-meta">
+        <span>⏱️ 70 min</span>
+        <span>📊 9 checkpoints</span>
+      </div>
+      <div class="module-progress-bar">
+        <div class="progress-track">
+          <div class="progress-fill" id="options-derivatives-progress" style="width: 0%;"></div>
+        </div>
+        <span class="progress-label" id="options-derivatives-label">0% Complete</span>
+      </div>
+      <div class="module-status" id="options-derivatives-status">Not Started</div>
+      <button class="module-btn" onclick="startModule('options-derivatives')" id="options-derivatives-btn">START MODULE →</button>
+    </div>
+
+    <!-- Module 2: Macro Economics -->
+    <div class="module-card">
+      <div class="expert-badge">EXPERT</div>
+      <div class="prerequisite-badge">INTERMEDIATE COMPLETE</div>
+      <div class="module-number">MODULE 02</div>
+      <div class="module-icon">🌍</div>
+      <h3 class="module-title">Macro Economics</h3>
+      <p class="module-description">Deep understanding of economic indicators, policy impacts, and global market dynamics for institutional-level analysis.</p>
+      <div class="module-features">
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Advanced Economic Analysis</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Central Bank Policies</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Global Market Dynamics</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Currency & Commodity Markets</span>
+        </div>
+      </div>
+      <div class="module-meta">
+        <span>⏱️ 65 min</span>
+        <span>📊 8 checkpoints</span>
+      </div>
+      <div class="module-progress-bar">
+        <div class="progress-track">
+          <div class="progress-fill" id="macro-economics-progress" style="width: 0%;"></div>
+        </div>
+        <span class="progress-label" id="macro-economics-label">0% Complete</span>
+      </div>
+      <div class="module-status" id="macro-economics-status">Not Started</div>
+      <button class="module-btn" onclick="startModule('macro-economics')" id="macro-economics-btn">START MODULE →</button>
+    </div>
+
+    <!-- Module 3: AI & Quant Strategies -->
+    <div class="module-card">
+      <div class="expert-badge">EXPERT</div>
+      <div class="prerequisite-badge">INTERMEDIATE COMPLETE</div>
+      <div class="module-number">MODULE 03</div>
+      <div class="module-icon">🤖</div>
+      <h3 class="module-title">AI & Quant Strategies</h3>
+      <p class="module-description">Cutting-edge algorithmic trading, machine learning applications, and quantitative investment strategies for modern markets.</p>
+      <div class="module-features">
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Algorithmic Trading Systems</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Machine Learning Models</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Backtesting & Validation</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Portfolio Optimization</span>
+        </div>
+      </div>
+      <div class="module-meta">
+        <span>⏱️ 75 min</span>
+        <span>📊 10 checkpoints</span>
+      </div>
+      <div class="module-progress-bar">
+        <div class="progress-track">
+          <div class="progress-fill" id="ai-quant-strategies-progress" style="width: 0%;"></div>
+        </div>
+        <span class="progress-label" id="ai-quant-strategies-label">0% Complete</span>
+      </div>
+      <div class="module-status" id="ai-quant-strategies-status">Not Started</div>
+      <button class="module-btn" onclick="startModule('ai-quant-strategies')" id="ai-quant-strategies-btn">START MODULE →</button>
+    </div>
+
+    <!-- Module 4: Portfolio Management -->
+    <div class="module-card">
+      <div class="expert-badge">EXPERT</div>
+      <div class="prerequisite-badge">INTERMEDIATE COMPLETE</div>
+      <div class="module-number">MODULE 04</div>
+      <div class="module-icon">📊</div>
+      <h3 class="module-title">Advanced Portfolio Management</h3>
+      <p class="module-description">Professional portfolio construction, risk management, and performance attribution for institutional-level investing.</p>
+      <div class="module-features">
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Portfolio Optimization Models</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Risk Management Systems</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Performance Attribution</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Alternative Investments</span>
+        </div>
+      </div>
+      <div class="module-meta">
+        <span>⏱️ 80 min</span>
+        <span>📊 9 checkpoints</span>
+      </div>
+      <div class="module-progress-bar">
+        <div class="progress-track">
+          <div class="progress-fill" id="portfolio-management-progress" style="width: 0%;"></div>
+        </div>
+        <span class="progress-label" id="portfolio-management-label">0% Complete</span>
+      </div>
+      <div class="module-status" id="portfolio-management-status">Not Started</div>
+      <button class="module-btn" onclick="startModule('portfolio-management')" id="portfolio-management-btn">START MODULE →</button>
+    </div>
+
+    <!-- Module 5: High-Frequency Trading -->
+    <div class="module-card">
+      <div class="expert-badge">EXPERT</div>
+      <div class="prerequisite-badge">INTERMEDIATE COMPLETE</div>
+      <div class="module-number">MODULE 05</div>
+      <div class="module-icon">⚡</div>
+      <h3 class="module-title">High-Frequency Trading</h3>
+      <p class="module-description">Ultra-fast trading strategies, market microstructure, and cutting-edge technology for professional trading firms.</p>
+      <div class="module-features">
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Market Microstructure</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Latency Optimization</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Statistical Arbitrage</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Co-location & Infrastructure</span>
+        </div>
+      </div>
+      <div class="module-meta">
+        <span>⏱️ 85 min</span>
+        <span>📊 10 checkpoints</span>
+      </div>
+      <div class="module-progress-bar">
+        <div class="progress-track">
+          <div class="progress-fill" id="hft-progress" style="width: 0%;"></div>
+        </div>
+        <span class="progress-label" id="hft-label">0% Complete</span>
+      </div>
+      <div class="module-status" id="hft-status">Not Started</div>
+      <button class="module-btn" onclick="startModule('hft')" id="hft-btn">START MODULE →</button>
+    </div>
+
+    <!-- Trading Simulator Card -->
+    <div class="module-card simulator-card">
+      <div class="module-number">🎯 PRACTICE</div>
+      <div class="module-icon">💹</div>
+      <h3 class="module-title">Trading Simulator</h3>
+      <p class="module-description">Test your advanced skills with professional-level trading tools, short selling, and a $10,000 virtual account.</p>
+      <div class="module-features">
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>$10,000 Virtual Account</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>30+ Instruments</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Short Selling Enabled</span>
+        </div>
+        <div class="module-feature">
+          <span class="feature-icon">✓</span>
+          <span>Advanced Analytics</span>
+        </div>
+      </div>
+      <div class="module-meta">
+        <span>⏱️ Unlimited</span>
+        <span>🎮 Professional</span>
+      </div>
+      <div class="simulator-stats" id="simulatorStats" style="margin: 15px 0; font-family: var(--mono); font-size: 12px; color: var(--muted);">
+        <div>No trading activity yet</div>
+      </div>
+      <button class="module-btn" onclick="openSimulator()" style="background: var(--purple); color: var(--bg); font-weight: 600;">PRACTICE TRADING →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Module data for advanced level
+  const advancedModules = [
+    { id: 'options-derivatives', totalCheckpoints: 9 },
+    { id: 'macro-economics', totalCheckpoints: 8 },
+    { id: 'ai-quant-strategies', totalCheckpoints: 10 },
+    { id: 'portfolio-management', totalCheckpoints: 9 },
+    { id: 'hft', totalCheckpoints: 10 }
+  ];
+
+  // Load and update module progress
+  function loadModuleProgress() {
+    const progressData = localStorage.getItem('learningModule_progress');
+    if (progressData) {
+      const data = JSON.parse(progressData);
+      
+      advancedModules.forEach(module => {
+        if (data[module.id]) {
+          const progress = data[module.id];
+          const percentage = Math.round((progress.progress / module.totalCheckpoints) * 100);
+          
+          const progressBar = document.getElementById(`${module.id}-progress`);
+          const progressLabel = document.getElementById(`${module.id}-label`);
+          const statusEl = document.getElementById(`${module.id}-status`);
+          const btnEl = document.getElementById(`${module.id}-btn`);
+          
+          if (progressBar) progressBar.style.width = percentage + '%';
+          if (progressLabel) progressLabel.textContent = percentage + '% Complete';
+          
+          if (statusEl && btnEl) {
+            if (progress.completed) {
+              statusEl.textContent = 'Completed ✓';
+              statusEl.className = 'module-status completed';
+              btnEl.textContent = 'REVIEW MODULE →';
+              btnEl.style.background = 'var(--amber)';
+            } else if (progress.progress > 0) {
+              statusEl.textContent = 'In Progress';
+              statusEl.className = 'module-status in-progress';
+              btnEl.textContent = 'CONTINUE MODULE →';
+            } else {
+              statusEl.textContent = 'Not Started';
+              statusEl.className = 'module-status';
+            }
+          }
+        }
+      });
+    }
+    
+    // Update simulator stats
+    updateSimulatorStats();
+    
+    // Update overall progress
+    updateOverallProgress();
+  }
+
+  // Update simulator statistics
+  function updateSimulatorStats() {
+    const simulatorData = localStorage.getItem('tradingSimulator_state');
+    const statsElement = document.getElementById('simulatorStats');
+    
+    if (simulatorData) {
+      const data = JSON.parse(simulatorData);
+      if (data.level && data.tradeCount > 0) {
+        const totalValue = data.balance + Object.keys(data.portfolio).reduce((total, symbol) => {
+          return total + (data.portfolio[symbol].shares * (data.stockPrices[symbol] || 0));
+        }, 0);
+        const pnl = totalValue - data.initialBalance;
+        
+        statsElement.innerHTML = `
+          <div style="color: var(--purple); font-weight: 600;">Level: ${data.level.toUpperCase()}</div>
+          <div>Trades: ${data.tradeCount} | P&L: <span style="color: ${pnl >= 0 ? 'var(--green)' : 'var(--red)'}">$${pnl.toFixed(2)}</span></div>
+          <div>Portfolio: $${totalValue.toFixed(2)}</div>
+        `;
+      } else {
+        statsElement.innerHTML = '<div>No trading activity yet</div>';
+      }
+    } else {
+      statsElement.innerHTML = '<div>No trading activity yet</div>';
+    }
+  }
+
+  // Update overall progress
+  function updateOverallProgress() {
+    const progressData = localStorage.getItem('learningModule_progress');
+    if (!progressData) return;
+    
+    const data = JSON.parse(progressData);
+    let completedModules = 0;
+    let totalTime = 0;
+    
+    advancedModules.forEach(module => {
+      if (data[module.id]) {
+        if (data[module.id].completed) {
+          completedModules++;
+        }
+        if (data[module.id].timeSpent) {
+          totalTime += data[module.id].timeSpent;
+        }
+      }
+    });
+    
+    const overallPercentage = Math.round((completedModules / advancedModules.length) * 100);
+    
+    // Update progress overview
+    document.getElementById('completedCount').textContent = completedModules;
+    document.getElementById('overallPercentage').textContent = overallPercentage + '%';
+    document.getElementById('overallProgressFill').style.width = overallPercentage + '%';
+    
+    // Format time
+    if (totalTime < 60) {
+      document.getElementById('totalTime').textContent = totalTime + 'm';
+    } else {
+      const hours = Math.floor(totalTime / 60);
+      const minutes = totalTime % 60;
+      document.getElementById('totalTime').textContent = hours + 'h ' + minutes + 'm';
+    }
+  }
+
+  // Start module (redirect to existing module pages)
+  function startModule(moduleId) {
+    // Map advanced modules to existing module files
+    const moduleMapping = {
+      'options-derivatives': 'module-options-derivatives',
+      'macro-economics': 'module-macro-economics',
+      'ai-quant-strategies': 'module-ai-quant-strategies',
+      'portfolio-management': 'module-markets-101',
+      'hft': 'module-ai-quant-strategies'
+    };
+    
+    const targetModule = moduleMapping[moduleId] || 'module-options-derivatives';
+    window.location.href = `${targetModule}.html`;
+  }
+
+  // Open trading simulator
+  function openSimulator() {
+    window.location.href = 'trading-simulator.html';
+  }
+
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const cursorRing = document.getElementById('cursorRing');
+
+  document.addEventListener('mousemove', (e) => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    cursorRing.style.left = e.clientX + 'px';
+    cursorRing.style.top = e.clientY + 'px';
+  });
+
+  document.addEventListener('mousedown', () => {
+    cursor.style.transform = 'scale(0.8)';
+    cursorRing.style.transform = 'scale(0.8)';
+  });
+
+  document.addEventListener('mouseup', () => {
+    cursor.style.transform = 'scale(1)';
+    cursorRing.style.transform = 'scale(1)';
+  });
+
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', () => {
+    loadModuleProgress();
+  });
+</script>
+
+</body>
+</html>

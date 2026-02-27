@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Market API Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #020b12; color: #e8f4f0; }
+        .test { margin: 10px 0; padding: 10px; background: #061520; border-radius: 8px; }
+        .success { border-left: 4px solid #00dc82; }
+        .error { border-left: 4px solid #ff4a6e; }
+        button { background: #00dc82; color: #020b12; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .data { background: #041119; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Market Analyzer API Test</h1>
+    <div id="results"></div>
+    
+    <button onclick="testStockQuote()">Test Stock Quote (AAPL)</button>
+    <button onclick="testMarketNews()">Test Market News</button>
+    <button onclick="testCompanyProfile()">Test Company Profile (AAPL)</button>
+    <button onclick="testStockSearch()">Test Stock Search (Tesla)</button>
+    
+    <script>
+        const FINNHUB_API_KEY = 'd6g83gpr01qt4931t7ogd6g83gpr01qt4931t7p0';
+        const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
+        
+        const results = document.getElementById('results');
+        
+        function addResult(message, type = 'success', data = null) {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.innerHTML = message;
+            
+            if (data) {
+                const dataDiv = document.createElement('div');
+                dataDiv.className = 'data';
+                dataDiv.textContent = JSON.stringify(data, null, 2);
+                div.appendChild(dataDiv);
+            }
+            
+            results.appendChild(div);
+        }
+        
+        async function testStockQuote() {
+            try {
+                const response = await fetch(`${FINNHUB_BASE_URL}/quote?symbol=AAPL&token=${FINNHUB_API_KEY}`);
+                const data = await response.json();
+                addResult(`✅ Stock Quote: AAPL - Current: $${data.c} (${data.dp > 0 ? '+' : ''}${data.dp}%)`, 'success', data);
+            } catch (error) {
+                addResult(`❌ Stock Quote Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testMarketNews() {
+            try {
+                const response = await fetch(`${FINNHUB_BASE_URL}/news?category=general&token=${FINNHUB_API_KEY}`);
+                const data = await response.json();
+                addResult(`✅ Market News: ${data.length} articles retrieved`, 'success', data.slice(0, 1)); // Show first article
+            } catch (error) {
+                addResult(`❌ Market News Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testCompanyProfile() {
+            try {
+                const response = await fetch(`${FINNHUB_BASE_URL}/stock/profile2?symbol=AAPL&token=${FINNHUB_API_KEY}`);
+                const data = await response.json();
+                addResult(`✅ Company Profile: ${data.name || 'Apple Inc.'}`, 'success', data);
+            } catch (error) {
+                addResult(`❌ Company Profile Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testStockSearch() {
+            try {
+                const response = await fetch(`${FINNHUB_BASE_URL}/search?q=Tesla&token=${FINNHUB_API_KEY}`);
+                const data = await response.json();
+                addResult(`✅ Stock Search: ${data.count || 0} results found`, 'success', data);
+            } catch (error) {
+                addResult(`❌ Stock Search Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = () => {
+            addResult('🚀 Market API Test Page Loaded', 'success');
+            addResult(`📡 Using API Key: ${FINNHUB_API_KEY.substring(0, 10)}...`, 'success');
+        };
+    </script>
+</body>
+</html>

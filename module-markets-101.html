@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markets 101 - Learning Module | ALPHA</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020b12;
+    --surface: #061520;
+    --border: rgba(0, 220, 130, 0.15);
+    --green: #00dc82;
+    --green-dim: rgba(0, 220, 130, 0.08);
+    --amber: #f5a623;
+    --red: #ff4a6e;
+    --text: #e8f4f0;
+    --muted: rgba(232, 244, 240, 0.45);
+    --mono: 'DM Mono', monospace;
+    --yellow: #FFE600;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 12px; height: 12px; background: var(--green); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: transform 0.15s ease; mix-blend-mode: screen; }
+  .cursor-ring { width: 36px; height: 36px; border: 1px solid rgba(0,220,130,0.4); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); opacity:0.6; pointer-events:none; z-index:1000; }
+
+  /* NAV */
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:24px 60px; background:linear-gradient(to bottom,rgba(2,11,18,0.95),transparent); backdrop-filter:blur(2px); }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:var(--text); display:flex; align-items:center; gap:10px; cursor:none; }
+  .logo-dot { width:8px; height:8px; background:var(--green); border-radius:50%; box-shadow:0 0 16px var(--green); animation:pulse 2s infinite; }
+  .nav-links { display:flex; gap:40px; list-style:none; }
+  .nav-links a { font-size:12px; font-weight:300; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.3s; }
+  .nav-links a:hover { color:var(--green); }
+  .nav-cta { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:10px 24px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; transition:all 0.3s; }
+  .nav-cta:hover { background:var(--green); color:var(--bg); }
+
+  /* Module Content */
+  .module-container { padding:120px 60px 80px; max-width:1200px; margin:0 auto; }
+  .module-header { margin-bottom:60px; }
+  .module-breadcrumb { font-family:var(--mono); font-size:11px; color:var(--muted); margin-bottom:20px; }
+  .module-breadcrumb a { color:var(--green); text-decoration:none; }
+  .module-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,6vw,80px); letter-spacing:2px; line-height:1; margin-bottom:20px; }
+  .module-subtitle { font-size:16px; font-weight:300; color:var(--muted); line-height:1.8; max-width:600px; }
+  .module-meta { display:flex; gap:30px; margin-top:30px; }
+  .meta-item { display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .meta-icon { font-size:16px; }
+
+  /* Progress Bar */
+  .progress-section { background:var(--surface); border:1px solid var(--border); padding:30px; margin-bottom:40px; border-radius:12px; }
+  .progress-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .progress-title { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; }
+  .progress-percentage { font-family:var(--mono); font-size:18px; color:var(--green); }
+  .progress-bar { height:8px; background:rgba(0,220,130,0.1); border-radius:4px; overflow:hidden; margin-bottom:20px; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--green),var(--amber)); border-radius:4px; transition:width 0.5s ease; }
+  .progress-stats { display:flex; gap:40px; font-family:var(--mono); font-size:12px; color:var(--muted); }
+
+  /* Content Sections */
+  .content-section { background:var(--surface); border:1px solid var(--border); padding:40px; margin-bottom:30px; border-radius:12px; position:relative; }
+  .section-number { position:absolute; top:-15px; left:40px; background:var(--green); color:var(--bg); font-family:'Bebas Neue',sans-serif; font-size:20px; padding:5px 15px; border-radius:20px; }
+  .section-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; margin-bottom:20px; margin-top:10px; }
+  .section-content { font-size:15px; line-height:1.8; color:var(--muted); }
+  .section-content h3 { font-family:'DM Serif Display',serif; font-size:20px; color:var(--text); margin:25px 0 15px; }
+  .section-content p { margin-bottom:15px; }
+  .section-content ul { margin:15px 0 15px 30px; }
+  .section-content li { margin-bottom:8px; }
+  .section-content .highlight { background:var(--green-dim); padding:2px 6px; border-radius:4px; color:var(--green); font-weight:500; }
+  .section-content .key-term { font-family:var(--mono); font-size:14px; background:rgba(245,166,35,0.1); padding:2px 8px; border-radius:4px; color:var(--amber); }
+
+  /* Interactive Elements */
+  .checkpoint-box { background:rgba(0,220,130,0.05); border:1px solid var(--border); padding:20px; margin:30px 0; border-radius:8px; display:flex; align-items:center; gap:20px; }
+  .checkpoint-checkbox { width:24px; height:24px; border:2px solid var(--green); border-radius:6px; cursor:none; display:flex; align-items:center; justify-content:center; transition:all 0.3s; }
+  .checkpoint-checkbox:hover { background:var(--green-dim); }
+  .checkpoint-checkbox.checked { background:var(--green); color:var(--bg); }
+  .checkpoint-content { flex:1; }
+  .checkpoint-title { font-family:var(--mono); font-size:14px; font-weight:600; margin-bottom:5px; }
+  .checkpoint-desc { font-size:12px; color:var(--muted); }
+
+  /* Action Buttons */
+  .action-buttons { display:flex; gap:20px; margin-top:40px; }
+  .btn-primary { font-family:var(--mono); font-size:14px; letter-spacing:1px; padding:14px 32px; background:var(--green); color:var(--bg); border:none; cursor:none; font-weight:600; transition:all 0.3s; border-radius:8px; }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,220,130,0.3); }
+  .btn-secondary { font-family:var(--mono); font-size:14px; letter-spacing:1px; padding:14px 32px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; font-weight:600; transition:all 0.3s; border-radius:8px; }
+  .btn-secondary:hover { background:var(--green-dim); }
+
+  /* Quiz Section */
+  .quiz-section { background:var(--surface); border:1px solid var(--border); padding:40px; margin-bottom:30px; border-radius:12px; }
+  .quiz-title { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; margin-bottom:30px; }
+  .quiz-question { margin-bottom:30px; }
+  .question-text { font-size:16px; font-weight:600; margin-bottom:15px; }
+  .quiz-options { display:flex; flex-direction:column; gap:12px; }
+  .quiz-option { background:rgba(2,11,18,0.5); border:1px solid var(--border); padding:15px 20px; border-radius:8px; cursor:none; transition:all 0.3s; display:flex; align-items:center; gap:12px; }
+  .quiz-option:hover { border-color:var(--green); background:var(--green-dim); }
+  .quiz-option.selected { border-color:var(--green); background:rgba(0,220,130,0.1); }
+  .quiz-option.correct { border-color:var(--green); background:rgba(0,220,130,0.2); }
+  .quiz-option.incorrect { border-color:var(--red); background:rgba(255,74,110,0.1); }
+  .option-radio { width:20px; height:20px; border:2px solid var(--border); border-radius:50%; display:flex; align-items:center; justify-content:center; transition:all 0.3s; }
+  .option-radio.selected { border-color:var(--green); }
+  .option-radio.selected::after { content:''; width:8px; height:8px; background:var(--green); border-radius:50%; }
+
+  /* Animations */
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  @keyframes slideIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .content-section { animation:slideIn 0.6s ease forwards; }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="window.location.href='index.html'" style="cursor:none;">
+    <div class="logo-dot"></div>
+    ALPHA
+  </div>
+  <ul class="nav-links">
+    <li><a href="learning-module.html" class="active-nav">Learning Module</a></li>
+    <li><a href="alpha-rush.html">Alpha Rush</a></li>
+    <li><a href="market-analyzer.html">Market Analyzer</a></li>
+    <li><a href="portfolio-analyzer.html">Portfolio Analyzer</a></li>
+    <li><a href="news-intelligence.html">News Intelligence</a></li>
+  </ul>
+  <button class="nav-cta" onclick="window.location.href='learning-module.html'">BACK TO MODULES</button>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="module-container">
+  <div class="module-header">
+    <div class="module-breadcrumb">
+      <a href="learning-module.html">Learning Modules</a> → Markets 101
+    </div>
+    <h1 class="module-title">MARKETS <em>101</em></h1>
+    <p class="module-subtitle">Master the fundamentals of financial markets, from basic concepts to advanced trading mechanics. Build your foundation for successful investing.</p>
+    <div class="module-meta">
+      <div class="meta-item">
+        <span class="meta-icon">📚</span>
+        <span>Beginner Level</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-icon">⏱️</span>
+        <span>45 min read</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-icon">🎯</span>
+        <span>6 Lessons</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Section -->
+  <div class="progress-section">
+    <div class="progress-header">
+      <h3 class="progress-title">YOUR PROGRESS</h3>
+      <span class="progress-percentage" id="progressPercentage">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+    </div>
+    <div class="progress-stats">
+      <span>Completed: <span id="completedCount">0</span>/6 checkpoints</span>
+      <span>Time spent: <span id="timeSpent">0</span> minutes</span>
+      <span>Last accessed: Just now</span>
+    </div>
+  </div>
+
+  <!-- Section 1: What Are Financial Markets? -->
+  <div class="content-section">
+    <div class="section-number">01</div>
+    <h2 class="section-title">What Are Financial Markets?</h2>
+    <div class="section-content">
+      <p>Financial markets are <span class="highlight">platforms where buyers and sellers trade financial assets</span> such as stocks, bonds, currencies, and derivatives. These markets play a crucial role in allocating capital efficiently throughout the economy.</p>
+      
+      <h3>Key Functions</h3>
+      <ul>
+        <li><span class="key-term">Price Discovery</span> - Markets determine the fair price of assets through supply and demand</li>
+        <li><span class="key-term">Capital Formation</span> - Companies raise capital by issuing securities to investors</li>
+        <li><span class="key-term">Liquidity</span> - Investors can easily buy and sell assets without significantly affecting prices</li>
+        <li><span class="key-term">Risk Management</span> - Markets provide tools to hedge against various risks</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 1)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Understanding Market Basics</div>
+          <div class="checkpoint-desc">Can you explain the four main functions of financial markets?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Types of Markets -->
+  <div class="content-section">
+    <div class="section-number">02</div>
+    <h2 class="section-title">Types of Financial Markets</h2>
+    <div class="section-content">
+      <p>Financial markets can be categorized in several ways. Understanding these distinctions is essential for navigating the investment landscape effectively.</p>
+      
+      <h3>By Asset Type</h3>
+      <ul>
+        <li><span class="key-term">Stock Markets</span> - Trading ownership shares in publicly traded companies</li>
+        <li><span class="key-term">Bond Markets</span> - Trading debt instruments issued by governments and corporations</li>
+        <li><span class="key-term">Forex Markets</span> - Trading foreign currencies 24/7 globally</li>
+        <li><span class="key-term">Commodity Markets</span> - Trading physical goods like oil, gold, and agricultural products</li>
+        <li><span class="key-term">Derivatives Markets</span> - Trading contracts whose value derives from underlying assets</li>
+      </ul>
+
+      <h3>By Trading Method</h3>
+      <ul>
+        <li><span class="key-term">Exchange Markets</span> - Centralized venues with standardized rules (NYSE, NASDAQ)</li>
+        <li><span class="key-term">Over-the-Counter (OTC)</span> - Decentralized trading between parties directly</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 2)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Market Classification</div>
+          <div class="checkpoint-desc">Can you differentiate between exchange and OTC markets?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Market Participants -->
+  <div class="content-section">
+    <div class="section-number">03</div>
+    <h2 class="section-title">Market Participants</h2>
+    <div class="section-content">
+      <p>Various participants contribute to market liquidity and efficiency. Each plays a unique role in the ecosystem.</p>
+      
+      <h3>Key Players</h3>
+      <ul>
+        <li><span class="key-term">Retail Investors</span> - Individual investors trading personal capital</li>
+        <li><span class="key-term">Institutional Investors</span> - Large organizations managing pooled funds (pension funds, mutual funds)</li>
+        <li><span class="key-term">Market Makers</span> - Provide liquidity by continuously quoting buy and sell prices</li>
+        <li><span class="key-term">Brokers</span> - Intermediaries facilitating trades for clients</li>
+        <li><span class="key-term">Regulators</span> - Government bodies overseeing market operations (SEC, FCA)</li>
+      </ul>
+
+      <h3>Trading Strategies</h3>
+      <p>Different participants employ various strategies based on their goals and time horizons:</p>
+      <ul>
+        <li><span class="highlight">Day Trading</span> - Opening and closing positions within the same trading day</li>
+        <li><span class="highlight">Swing Trading</span> - Holding positions for several days to weeks</li>
+        <li><span class="highlight">Position Trading</span> - Long-term investments based on fundamental analysis</li>
+        <li><span class="highlight">Algorithmic Trading</span> - Using computer programs to execute trades automatically</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 3)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Market Roles</div>
+          <div class="checkpoint-desc">Can you identify the role of market makers in providing liquidity?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Market Indices -->
+  <div class="content-section">
+    <div class="section-number">04</div>
+    <h2 class="section-title">Market Indices</h2>
+    <div class="section-content">
+      <p>Market indices are <span class="highlight">benchmarks that track the performance of a specific group of stocks</span>, representing overall market or sector performance.</p>
+      
+      <h3>Major Global Indices</h3>
+      <ul>
+        <li><span class="key-term">S&P 500</span> - 500 large-cap US stocks, market-cap weighted</li>
+        <li><span class="key-term">Dow Jones Industrial Average</span> - 30 large US companies, price-weighted</li>
+        <li><span class="key-term">NASDAQ Composite</span> - Over 3,000 stocks, tech-heavy</li>
+        <li><span class="key-term">FTSE 100</span> - 100 largest UK companies</li>
+        <li><span class="key-term">Nikkei 225</span> - 225 large Japanese companies</li>
+      </ul>
+
+      <h3>Why Indices Matter</h3>
+      <ul>
+        <li>Performance measurement against market benchmarks</li>
+        <li>Economic indicators of overall market health</li>
+        <li>Basis for index funds and ETFs</li>
+        <li>Market sentiment indicators</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 4)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Understanding Indices</div>
+          <div class="checkpoint-desc">Can you explain the difference between price-weighted and market-cap weighted indices?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 5: Trading Hours and Sessions -->
+  <div class="content-section">
+    <div class="section-number">05</div>
+    <h2 class="section-title">Trading Hours and Sessions</h2>
+    <div class="section-content">
+      <p>Global markets operate across different time zones, creating overlapping trading sessions that affect liquidity and volatility.</p>
+      
+      <h3>Major Trading Sessions</h3>
+      <ul>
+        <li><span class="key-term">Sydney Session</span> - 5:00 PM to 2:00 AM EST (Asian markets open)</li>
+        <li><span class="key-term">Tokyo Session</span> - 7:00 PM to 4:00 AM EST</li>
+        <li><span class="key-term">London Session</span> - 3:00 AM to 11:00 AM EST (Highest volume)</li>
+        <li><span class="key-term">New York Session</span> - 8:00 AM to 5:00 PM EST</li>
+      </ul>
+
+      <h3>Market Hours Impact</h3>
+      <p>Understanding trading sessions is crucial because:</p>
+      <ul>
+        <li><span class="highlight">Overlapping sessions</span> create higher liquidity and tighter spreads</li>
+        <li><span class="highlight">Session opens</span> often see increased volatility</li>
+        <li><span class="highlight">Weekend gaps</span> can occur when markets reopen</li>
+        <li><span class="highlight">Economic releases</span> are timed for specific sessions</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 5)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Trading Sessions</div>
+          <div class="checkpoint-desc">Can you identify which trading session typically has the highest volume?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 6: Market Regulation -->
+  <div class="content-section">
+    <div class="section-number">06</div>
+    <h2 class="section-title">Market Regulation</h2>
+    <div class="section-content">
+      <p>Financial markets are regulated to <span class="highlight">protect investors, ensure fair trading, and maintain market integrity</span>. Regulatory bodies worldwide work to create a level playing field.</p>
+      
+      <h3>Key Regulatory Bodies</h3>
+      <ul>
+        <li><span class="key-term">SEC (USA)</span> - Securities and Exchange Commission</li>
+        <li><span class="key-term">FCA (UK)</span> - Financial Conduct Authority</li>
+        <li><span class="key-term">ESMA (EU)</span> - European Securities and Markets Authority</li>
+        <li><span class="key-term">ASIC (Australia)</span> - Australian Securities and Investments Commission</li>
+      </ul>
+
+      <h3>Investor Protections</h3>
+      <ul>
+        <li><span class="highlight">Disclosure Requirements</span> - Companies must provide accurate, timely information</li>
+        <li><span class="highlight">Insider Trading Laws</span> - Prohibit trading on non-public information</li>
+        <li><span class="highlight">Market Manipulation Rules</span> - Prevent artificial price movements</li>
+        <li><span class="highlight">Investor Compensation Funds</span> - Protect investors in case of broker failure</li>
+      </ul>
+
+      <h3>Know Your Rights</h3>
+      <p>As an investor, you have the right to:</p>
+      <ul>
+        <li>Clear and accurate information about investments</li>
+        <li>Fair treatment regardless of account size</li>
+        <li>Access to dispute resolution mechanisms</li>
+        <li>Protection against fraud and misconduct</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 6)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Regulatory Knowledge</div>
+          <div class="checkpoint-desc">Can you explain why insider trading is prohibited?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Knowledge Check Quiz -->
+  <div class="quiz-section">
+    <h3 class="quiz-title">KNOWLEDGE CHECK</h3>
+    <div id="quizContainer">
+      <div class="quiz-question">
+        <div class="question-text">1. What is the primary function of financial markets?</div>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="selectAnswer(this, 0, 'a')">
+            <div class="option-radio"></div>
+            <span>To make rich people richer</span>
+          </div>
+          <div class="quiz-option" onclick="selectAnswer(this, 0, 'b')">
+            <div class="option-radio"></div>
+            <span>To allocate capital efficiently throughout the economy</span>
+          </div>
+          <div class="quiz-option" onclick="selectAnswer(this, 0, 'c')">
+            <div class="option-radio"></div>
+            <span>To provide gambling opportunities</span>
+          </div>
+          <div class="quiz-option" onclick="selectAnswer(this, 0, 'd')">
+            <div class="option-radio"></div>
+            <span>To control government spending</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-question">
+        <div class="question-text">2. Which market session typically has the highest trading volume?</div>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="selectAnswer(this, 1, 'a')">
+            <div class="option-radio"></div>
+            <span>Sydney Session</span>
+          </div>
+          <div class="quiz-option" onclick="selectAnswer(this, 1, 'b')">
+            <div class="option-radio"></div>
+            <span>Tokyo Session</span>
+          </div>
+          <div class="quiz-option" onclick="selectAnswer(this, 1, 'c')">
+            <div class="option-radio"></div>
+            <span>London Session</span>
+          </div>
+          <div class="quiz-option" onclick="selectAnswer(this, 1, 'd')">
+            <div class="option-radio"></div>
+            <span>New York Session</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-question">
+        <div class="question-text">3. What does "liquidity" mean in financial markets?</div>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="selectAnswer(this, 2, 'a')">
+            <div class="option-radio"></div>
+            <span>The amount of water in trading algorithms</span>
+          </div>
+          <div class="quiz-option" onclick="selectAnswer(this, 2, 'b')">
+            <div class="option-radio"></div>
+            <span>How easily assets can be bought and sold without affecting price</span>
+          </div>
+          <div class="quiz-option" onclick="selectAnswer(this, 2, 'c')">
+            <div class="option-radio"></div>
+            <span>The quality of financial analysis</span>
+          </div>
+          <div class="quiz-option" onclick="selectAnswer(this, 2, 'd')">
+            <div class="option-radio"></div>
+            <span>The speed of internet connections</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button class="btn-primary" onclick="completeModule()">MARK AS COMPLETE</button>
+    <button class="btn-secondary" onclick="window.location.href='learning-module.html'">BACK TO MODULES</button>
+  </div>
+</div>
+
+<script>
+    // Module progress tracking
+    let moduleProgress = {
+        checkpoints: [false, false, false, false, false, false],
+        quizAnswers: [null, null, null],
+        startTime: Date.now(),
+        completed: false
+    };
+
+    // Load saved progress
+    function loadProgress() {
+        const saved = localStorage.getItem('markets101_progress');
+        if (saved) {
+            moduleProgress = JSON.parse(saved);
+            updateUI();
+        }
+        updateTimeSpent();
+    }
+
+    // Save progress
+    function saveProgress() {
+        localStorage.setItem('markets101_progress', JSON.stringify(moduleProgress));
+        updateLearningModuleDashboard();
+    }
+
+    // Toggle checkpoint
+    function toggleCheckpoint(element, checkpointIndex) {
+        const isChecked = element.classList.contains('checked');
+        
+        if (isChecked) {
+            element.classList.remove('checked');
+            element.querySelector('.checkmark').style.display = 'none';
+            moduleProgress.checkpoints[checkpointIndex - 1] = false;
+        } else {
+            element.classList.add('checked');
+            element.querySelector('.checkmark').style.display = 'block';
+            moduleProgress.checkpoints[checkpointIndex - 1] = true;
+            
+            // Visual feedback
+            element.style.animation = 'pulse 0.5s ease';
+            setTimeout(() => {
+                element.style.animation = '';
+            }, 500);
+        }
+        
+        updateProgress();
+        saveProgress();
+    }
+
+    // Update progress bar
+    function updateProgress() {
+        const completedCount = moduleProgress.checkpoints.filter(c => c).length;
+        const totalCount = moduleProgress.checkpoints.length;
+        const percentage = Math.round((completedCount / totalCount) * 100);
+        
+        document.getElementById('progressFill').style.width = percentage + '%';
+        document.getElementById('progressPercentage').textContent = percentage + '%';
+        document.getElementById('completedCount').textContent = completedCount;
+    }
+
+    // Update time spent
+    function updateTimeSpent() {
+        setInterval(() => {
+            const minutes = Math.floor((Date.now() - moduleProgress.startTime) / 60000);
+            document.getElementById('timeSpent').textContent = minutes;
+        }, 60000);
+    }
+
+    // Quiz functionality
+    function selectAnswer(element, questionIndex, answer) {
+        // Remove previous selection
+        const options = element.parentElement.querySelectorAll('.quiz-option');
+        options.forEach(opt => opt.classList.remove('selected'));
+        
+        // Add selection
+        element.classList.add('selected');
+        element.querySelector('.option-radio').classList.add('selected');
+        
+        // Save answer
+        moduleProgress.quizAnswers[questionIndex] = answer;
+        saveProgress();
+    }
+
+    // Complete module
+    function completeModule() {
+        const completedCount = moduleProgress.checkpoints.filter(c => c).length;
+        
+        if (completedCount < 6) {
+            alert('Please complete all checkpoints before marking the module as complete.');
+            return;
+        }
+        
+        moduleProgress.completed = true;
+        moduleProgress.completionTime = Date.now();
+        saveProgress();
+        
+        // Show success message
+        const button = event.target;
+        button.textContent = '✓ MODULE COMPLETED';
+        button.style.background = 'var(--amber)';
+        button.style.color = 'var(--bg)';
+        
+        // Update dashboard
+        updateLearningModuleDashboard();
+        
+        // Redirect after delay
+        setTimeout(() => {
+            window.location.href = 'learning-module.html';
+        }, 2000);
+    }
+
+    // Update learning module dashboard
+    function updateLearningModuleDashboard() {
+        // Update dashboard data
+        let dashboardData = JSON.parse(localStorage.getItem('learningModule_progress') || '{}');
+        
+        dashboardData['markets-101'] = {
+            completed: moduleProgress.completed,
+            progress: moduleProgress.checkpoints.filter(c => c).length,
+            timeSpent: Math.floor((Date.now() - moduleProgress.startTime) / 60000),
+            lastAccessed: new Date().toISOString()
+        };
+        
+        localStorage.setItem('learningModule_progress', JSON.stringify(dashboardData));
+    }
+
+    // Update UI based on saved progress
+    function updateUI() {
+        // Update checkpoints
+        moduleProgress.checkpoints.forEach((completed, index) => {
+            if (completed) {
+                const checkbox = document.querySelectorAll('.checkpoint-checkbox')[index];
+                if (checkbox) {
+                    checkbox.classList.add('checked');
+                    checkbox.querySelector('.checkmark').style.display = 'block';
+                }
+            }
+        });
+        
+        // Update quiz answers
+        moduleProgress.quizAnswers.forEach((answer, index) => {
+            if (answer) {
+                const options = document.querySelectorAll('.quiz-question')[index]?.querySelectorAll('.quiz-option');
+                if (options) {
+                    const answerMap = {'a': 0, 'b': 1, 'c': 2, 'd': 3};
+                    const selectedOption = options[answerMap[answer]];
+                    if (selectedOption) {
+                        selectedOption.classList.add('selected');
+                        selectedOption.querySelector('.option-radio').classList.add('selected');
+                    }
+                }
+            }
+        });
+        
+        // Update progress
+        updateProgress();
+        
+        // Show completion status
+        if (moduleProgress.completed) {
+            const button = document.querySelector('.btn-primary');
+            button.textContent = '✓ MODULE COMPLETED';
+            button.style.background = 'var(--amber)';
+            button.style.color = 'var(--bg)';
+        }
+    }
+
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const cursorRing = document.getElementById('cursorRing');
+
+    document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+        cursorRing.style.left = e.clientX + 'px';
+        cursorRing.style.top = e.clientY + 'px';
+    });
+
+    document.addEventListener('mousedown', () => {
+        cursor.style.transform = 'scale(0.8)';
+        cursorRing.style.transform = 'scale(0.8)';
+    });
+
+    document.addEventListener('mouseup', () => {
+        cursor.style.transform = 'scale(1)';
+        cursorRing.style.transform = 'scale(1)';
+    });
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProgress();
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>News Intelligence - ALPHA Finance Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020b12;
+    --surface: #061520;
+    --border: rgba(0, 220, 130, 0.15);
+    --green: #00dc82;
+    --green-dim: rgba(0, 220, 130, 0.08);
+    --amber: #f5a623;
+    --red: #ff4a6e;
+    --text: #e8f4f0;
+    --muted: rgba(232, 244, 240, 0.45);
+    --mono: 'DM Mono', monospace;
+    --yellow: #FFE600;
+    --purple: #9333ea;
+    --orange: #ea580c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 12px; height: 12px; background: var(--green); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: transform 0.15s ease; mix-blend-mode: screen; }
+  .cursor-ring { width: 36px; height: 36px; border: 1px solid rgba(0,220,130,0.4); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); opacity:0.6; pointer-events:none; z-index:1000; }
+
+  /* NAV */
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:24px 60px; background:linear-gradient(to bottom,rgba(2,11,18,0.95),transparent); backdrop-filter:blur(2px); }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:var(--text); display:flex; align-items:center; gap:10px; cursor:none; }
+  .logo-dot { width:8px; height:8px; background:var(--green); border-radius:50%; box-shadow:0 0 16px var(--green); animation:pulse 2s infinite; }
+  .nav-links { display:flex; gap:40px; list-style:none; }
+  .nav-links a { font-size:12px; font-weight:300; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.3s; }
+  .nav-links a:hover { color:var(--green); }
+  .nav-cta { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:10px 24px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; transition:all 0.3s; }
+  .nav-cta:hover { background:var(--green); color:var(--bg); }
+
+  /* Main Content */
+  .main-content { padding:120px 60px 80px; min-height:100vh; }
+  .page-header { margin-bottom:60px; }
+  .page-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,6vw,80px); letter-spacing:2px; line-height:1; margin-bottom:20px; }
+  .page-title em { font-family:'DM Serif Display',serif; font-style:italic; color:var(--green); }
+  .page-subtitle { font-size:16px; font-weight:300; color:var(--muted); line-height:1.8; max-width:600px; }
+
+  /* Alert System */
+  .alert-system { position:fixed; top:100px; right:30px; z-index:400; max-width:400px; }
+  .alert-card { background:var(--surface); border:1px solid var(--border); padding:20px; margin-bottom:15px; position:relative; overflow:hidden; animation:slideInRight 0.5s cubic-bezier(0.34,1.56,0.64,1); backdrop-filter:blur(20px); box-shadow:0 10px 40px rgba(0,0,0,0.3); }
+  .alert-card::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; }
+  .alert-card.critical::before { background:var(--red); animation:glow 2s infinite; }
+  .alert-card.high::before { background:var(--orange); }
+  .alert-card.medium::before { background:var(--amber); }
+  .alert-card.low::before { background:var(--green); }
+  .alert-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+  .alert-severity { font-family:var(--mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; padding:4px 8px; border-radius:4px; font-weight:600; }
+  .severity-critical { background:rgba(255,74,110,0.2); color:var(--red); animation:pulse 1s infinite; }
+  .severity-high { background:rgba(234,88,12,0.2); color:var(--orange); }
+  .severity-medium { background:rgba(245,166,35,0.2); color:var(--amber); }
+  .severity-low { background:rgba(0,220,130,0.2); color:var(--green); }
+  .alert-time { font-family:var(--mono); font-size:10px; color:var(--muted); }
+  .alert-title { font-family:'DM Serif Display',serif; font-size:16px; font-weight:600; margin-bottom:8px; line-height:1.3; }
+  .alert-description { font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:12px; }
+  .alert-impact { display:flex; gap:8px; flex-wrap:wrap; }
+  .impact-tag { font-family:var(--mono); font-size:9px; letter-spacing:1px; padding:3px 8px; background:rgba(0,220,130,0.1); border:1px solid var(--border); border-radius:12px; color:var(--green); }
+  .alert-close { position:absolute; top:15px; right:15px; background:none; border:none; color:var(--muted); font-size:16px; cursor:none; transition:color 0.2s; }
+  .alert-close:hover { color:var(--text); }
+
+  /* Notification-style popup */
+  .notification-popup { position:fixed; top:20px; right:20px; z-index:1000; min-width:350px; max-width:450px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:0; overflow:hidden; animation:notificationSlide 0.4s cubic-bezier(0.34,1.56,0.64,1); box-shadow:0 20px 60px rgba(0,0,0,0.4); backdrop-filter:blur(20px); }
+  .notification-popup.critical { border-color:var(--red); box-shadow:0 20px 60px rgba(255,74,110,0.3); }
+  .notification-popup.high { border-color:var(--orange); box-shadow:0 20px 60px rgba(234,88,12,0.3); }
+  .notification-popup.medium { border-color:var(--amber); box-shadow:0 20px 60px rgba(245,166,35,0.3); }
+  .notification-popup.low { border-color:var(--green); box-shadow:0 20px 60px rgba(0,220,130,0.3); }
+  .notification-header { padding:16px 20px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border); }
+  .notification-icon { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:600; }
+  .notification-icon.critical { background:rgba(255,74,110,0.2); color:var(--red); }
+  .notification-icon.high { background:rgba(234,88,12,0.2); color:var(--orange); }
+  .notification-icon.medium { background:rgba(245,166,35,0.2); color:var(--amber); }
+  .notification-icon.low { background:rgba(0,220,130,0.2); color:var(--green); }
+  .notification-title-area { flex:1; }
+  .notification-badge { font-family:var(--mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; padding:3px 8px; border-radius:4px; font-weight:600; margin-bottom:4px; display:inline-block; }
+  .notification-badge.critical { background:rgba(255,74,110,0.2); color:var(--red); }
+  .notification-badge.high { background:rgba(234,88,12,0.2); color:var(--orange); }
+  .notification-badge.medium { background:rgba(245,166,35,0.2); color:var(--amber); }
+  .notification-badge.low { background:rgba(0,220,130,0.2); color:var(--green); }
+  .notification-headline { font-family:'DM Serif Display',serif; font-size:14px; font-weight:600; color:var(--text); line-height:1.3; }
+  .notification-body { padding:16px 20px; }
+  .notification-description { font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:12px; }
+  .notification-impacts { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .notification-impact { font-family:var(--mono); font-size:9px; letter-spacing:1px; padding:3px 8px; background:rgba(0,220,130,0.1); border:1px solid var(--border); border-radius:12px; color:var(--green); }
+  .notification-actions { display:flex; gap:8px; }
+  .notification-btn { font-family:var(--mono); font-size:10px; letter-spacing:1px; padding:6px 12px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:none; transition:all 0.2s; border-radius:6px; }
+  .notification-btn:hover { border-color:var(--green); color:var(--green); }
+  .notification-btn.primary { background:var(--green); color:var(--bg); border-color:var(--green); }
+  .notification-btn.primary:hover { opacity:0.8; }
+  .notification-close { position:absolute; top:12px; right:12px; background:none; border:none; color:var(--muted); font-size:14px; cursor:none; transition:color 0.2s; width:24px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:4px; }
+  .notification-close:hover { background:rgba(255,255,255,0.1); color:var(--text); }
+
+  /* Event Detection Dashboard */
+  .detection-dashboard { display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-bottom:40px; }
+  .detection-panel { background:var(--surface); border:1px solid var(--border); padding:30px; }
+  .panel-title { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; margin-bottom:20px; }
+  .detection-status { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+  .status-indicator { width:12px; height:12px; border-radius:50%; animation:pulse 2s infinite; }
+  .status-active { background:var(--green); box-shadow:0 0 12px var(--green); }
+  .status-text { font-family:var(--mono); font-size:12px; color:var(--green); }
+  .detection-metrics { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+  .metric-item { background:rgba(2,11,18,0.5); border:1px solid var(--border); padding:15px; }
+  .metric-value { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--text); line-height:1; margin-bottom:5px; }
+  .metric-label { font-family:var(--mono); font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+
+  /* News Feed */
+  .news-feed { background:var(--surface); border:1px solid var(--border); padding:30px; margin-bottom:40px; }
+  .news-item { padding:20px 0; border-bottom:1px solid var(--border); display:grid; grid-template-columns:60px 1fr auto; gap:20px; align-items:start; transition:background 0.3s; }
+  .news-item:hover { background:var(--green-dim); margin:0 -20px; padding:20px; }
+  .news-item:last-child { border-bottom:none; }
+  .news-signal { width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600; }
+  .signal-critical { background:rgba(255,74,110,0.2); color:var(--red); border:2px solid var(--red); }
+  .signal-high { background:rgba(234,88,12,0.2); color:var(--orange); border:2px solid var(--orange); }
+  .signal-medium { background:rgba(245,166,35,0.2); color:var(--amber); border:2px solid var(--amber); }
+  .signal-low { background:rgba(0,220,130,0.2); color:var(--green); border:2px solid var(--green); }
+  .news-content { flex:1; }
+  .news-headline { font-size:14px; font-weight:600; margin-bottom:6px; line-height:1.4; }
+  .news-summary { font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:8px; }
+  .news-meta { font-family:var(--mono); font-size:10px; color:var(--muted); }
+  .news-score { font-family:var(--mono); font-size:12px; text-align:right; }
+  .score-value { font-size:18px; font-weight:600; }
+  .score-critical { color:var(--red); }
+  .score-high { color:var(--orange); }
+  .score-medium { color:var(--amber); }
+  .score-low { color:var(--green); }
+
+  /* AI Analysis Panel */
+  .ai-panel { background:var(--surface); border:1px solid var(--border); padding:30px; }
+  .ai-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+  .ai-badge { font-family:var(--mono); font-size:10px; letter-spacing:2px; color:var(--green); padding:6px 12px; background:rgba(0,220,130,0.1); border:1px solid var(--green); border-radius:4px; display:flex; align-items:center; gap:6px; }
+  .ai-dot { width:6px; height:6px; background:var(--green); border-radius:50%; animation:pulse 1.5s infinite; }
+  .ai-insights { font-family:var(--mono); font-size:12px; line-height:1.8; color:var(--muted); }
+  .insight-item { padding:12px 0; border-bottom:1px solid rgba(0,220,130,0.1); }
+  .insight-item:last-child { border-bottom:none; }
+  .insight-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .insight-type { font-weight:600; color:var(--text); }
+  .insight-confidence { font-size:10px; color:var(--green); }
+  .insight-text { color:var(--muted); line-height:1.6; }
+
+  /* Control Panel */
+  .control-panel { background:var(--surface); border:1px solid var(--border); padding:30px; }
+  .control-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; margin-bottom:20px; }
+  .threshold-controls { display:flex; flex-direction:column; gap:15px; }
+  .threshold-item { display:flex; justify-content:space-between; align-items:center; }
+  .threshold-label { font-family:var(--mono); font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+  .threshold-slider { width:120px; height:4px; background:var(--border); border-radius:2px; position:relative; cursor:none; }
+  .threshold-fill { height:100%; background:var(--green); border-radius:2px; transition:width 0.3s; }
+  .threshold-value { font-family:var(--mono); font-size:11px; color:var(--text); min-width:30px; text-align:right; }
+
+  /* Animations */
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  @keyframes slideInRight { from{opacity:0;transform:translateX(100%)} to{opacity:1;transform:translateX(0)} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes glow { 0%,100%{box-shadow:0 0 5px var(--red)} 50%{box-shadow:0 0 20px var(--red),0 0 30px var(--red)} }
+  @keyframes notificationSlide { from{opacity:0;transform:translateX(100%) translateY(-20px)} to{opacity:1;transform:translateX(0) translateY(0)} }
+  @keyframes notificationShake { 0%,100%{transform:translateX(0)} 10%,30%,50%,70%,90%{transform:translateX(-2px)} 20%,40%,60%,80%{transform:translateX(2px)} }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Alert System -->
+<div class="alert-system" id="alertSystem"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="window.location.href='index.html'" style="cursor:none;">
+    <div class="logo-dot"></div>
+    ALPHA
+  </div>
+  <ul class="nav-links">
+    <li><a href="learning-module.html">Learning Module</a></li>
+    <li><a href="alpha-rush.html">Alpha Rush</a></li>
+    <li><a href="market-analyzer.html">Market Analyzer</a></li>
+    <li><a href="portfolio-analyzer.html">Portfolio Analyzer</a></li>
+    <li><a href="news-intelligence.html" class="active-nav">News Intelligence</a></li>
+  </ul>
+  <button class="nav-cta" onclick="window.location.href='index.html'">BACK TO HOME</button>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">NEWS <em>INTELLIGENCE</em></h1>
+    <p class="page-subtitle">AI-powered event detection system monitoring global financial news for market-impacting events in real-time.</p>
+  </div>
+
+  <!-- Detection Dashboard -->
+  <div class="detection-dashboard">
+    <div class="detection-panel">
+      <h3 class="panel-title">EVENT DETECTION STATUS</h3>
+      <div class="detection-status">
+        <div class="status-indicator status-active"></div>
+        <span class="status-text">MONITORING ACTIVE</span>
+      </div>
+      <div class="detection-metrics">
+        <div class="metric-item">
+          <div class="metric-value" id="eventsToday">7</div>
+          <div class="metric-label">Events Today</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-value" id="criticalEvents">2</div>
+          <div class="metric-label">Critical Events</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-value" id="accuracy">94.2%</div>
+          <div class="metric-label">Detection Accuracy</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-value" id="avgResponse">12s</div>
+          <div class="metric-label">Avg Response Time</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detection-panel">
+      <h3 class="panel-title">AI ANALYSIS</h3>
+      <div class="ai-header">
+        <div class="ai-badge">
+          <div class="ai-dot"></div>
+          AI ENGINE ACTIVE
+        </div>
+      </div>
+      <div class="ai-insights" id="aiInsights">
+        <div class="insight-item">
+          <div class="insight-header">
+            <span class="insight-type">Volatility Spike</span>
+            <span class="insight-confidence">92% confidence</span>
+          </div>
+          <div class="insight-text">Unusual options activity detected in tech sector - potential major announcement incoming.</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-header">
+            <span class="insight-type">Regulatory Impact</span>
+            <span class="insight-confidence">87% confidence</span>
+          </div>
+          <div class="insight-text">Fed policy language suggests upcoming rate changes - banking sector likely affected.</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-header">
+            <span class="insight-type">Geopolitical Risk</span>
+            <span class="insight-confidence">78% confidence</span>
+          </div>
+          <div class="insight-text">Trade negotiations showing progress - export-oriented stocks may benefit.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- News Feed -->
+  <div class="news-feed">
+    <h3 class="panel-title">DETECTED EVENTS</h3>
+    <div id="newsFeed">
+      <!-- News items will be populated here -->
+    </div>
+  </div>
+
+  <!-- Control Panel -->
+  <div class="control-panel">
+    <h3 class="control-title">ALERT THRESHOLDS</h3>
+    <div class="threshold-controls">
+      <div class="threshold-item">
+        <span class="threshold-label">Critical Sensitivity</span>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div class="threshold-slider" onclick="adjustThreshold('critical', event)">
+            <div class="threshold-fill" id="criticalFill" style="width:75%;"></div>
+          </div>
+          <span class="threshold-value" id="criticalValue">75%</span>
+        </div>
+      </div>
+      <div class="threshold-item">
+        <span class="threshold-label">High Impact</span>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div class="threshold-slider" onclick="adjustThreshold('high', event)">
+            <div class="threshold-fill" id="highFill" style="width:60%;"></div>
+          </div>
+          <span class="threshold-value" id="highValue">60%</span>
+        </div>
+      </div>
+      <div class="threshold-item">
+        <span class="threshold-label">Medium Impact</span>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div class="threshold-slider" onclick="adjustThreshold('medium', event)">
+            <div class="threshold-fill" id="mediumFill" style="width:40%;"></div>
+          </div>
+          <span class="threshold-value" id="mediumValue">40%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    // Finnhub API Configuration
+    const FINNHUB_API_KEY = 'd6g83gpr01qt4931t7ogd6g83gpr01qt4931t7p0';
+    const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
+    
+    // News API Configuration
+    const NEWS_API_KEY = 'ec24831673cb4bd7a5c833c13e9b45de';
+    const NEWS_API_BASE_URL = 'https://newsapi.org/v2';
+
+    // Alert System State
+    let alertCount = 0;
+    let detectionThresholds = {
+        critical: 75,
+        high: 60,
+        medium: 40
+    };
+
+    // Event Detection Engine
+    class EventDetectionEngine {
+        constructor() {
+            this.isRunning = true;
+            this.eventHistory = [];
+            this.aiModel = new AIEventClassifier();
+        }
+
+        async analyzeNews(newsItem) {
+            const impactScore = await this.calculateImpactScore(newsItem);
+            const eventType = this.classifyEventType(newsItem);
+            const severity = this.determineSeverity(impactScore);
+            
+            return {
+                ...newsItem,
+                impactScore,
+                eventType,
+                severity,
+                timestamp: new Date(),
+                id: ++alertCount
+            };
+        }
+
+        async calculateImpactScore(newsItem) {
+            // Sophisticated scoring algorithm
+            let score = 0;
+            const keywords = {
+                critical: ['crash', 'recession', 'bankruptcy', 'fraud', 'scandal', 'war', 'crisis'],
+                high: ['rate hike', 'inflation', 'regulation', 'lawsuit', 'merger', 'acquisition'],
+                medium: ['earnings', 'guidance', 'forecast', 'expansion', 'layoffs'],
+                low: ['partnership', 'product launch', 'hiring', 'dividend']
+            };
+
+            const text = (newsItem.headline + ' ' + newsItem.summary).toLowerCase();
+            
+            Object.entries(keywords).forEach(([level, words]) => {
+                words.forEach(word => {
+                    if (text.includes(word)) {
+                        score += level === 'critical' ? 25 : level === 'high' ? 15 : level === 'medium' ? 10 : 5;
+                    }
+                });
+            });
+
+            // Add randomness for demo
+            score += Math.random() * 20;
+            return Math.min(100, score);
+        }
+
+        classifyEventType(newsItem) {
+            const types = ['Market Movement', 'Regulatory', 'Earnings', 'M&A', 'Geopolitical', 'Technology'];
+            return types[Math.floor(Math.random() * types.length)];
+        }
+
+        determineSeverity(score) {
+            if (score >= detectionThresholds.critical) return 'critical';
+            if (score >= detectionThresholds.high) return 'high';
+            if (score >= detectionThresholds.medium) return 'medium';
+            return 'low';
+        }
+    }
+
+    // AI Event Classifier
+    class AIEventClassifier {
+        async generateInsights(event) {
+            const insights = [
+                {
+                    type: 'Volatility Spike',
+                    confidence: Math.floor(Math.random() * 20) + 80,
+                    text: this.generateVolatilityInsight(event)
+                },
+                {
+                    type: 'Sector Impact',
+                    confidence: Math.floor(Math.random() * 15) + 75,
+                    text: this.generateSectorInsight(event)
+                }
+            ];
+            return insights;
+        }
+
+        generateVolatilityInsight(event) {
+            const templates = [
+                'Unusual trading patterns detected in related securities - expect increased volatility.',
+                'Options volume surge suggests institutional positioning ahead of news.',
+                'Short interest building in affected sector - potential for short squeeze.'
+            ];
+            return templates[Math.floor(Math.random() * templates.length)];
+        }
+
+        generateSectorInsight(event) {
+            const sectors = ['Technology', 'Finance', 'Healthcare', 'Energy', 'Consumer'];
+            const sector = sectors[Math.floor(Math.random() * sectors.length)];
+            return `${sector} sector showing correlated movement patterns - watch for cascade effects.`;
+        }
+    }
+
+    // Alert Manager
+    class AlertManager {
+        constructor() {
+            this.activeAlerts = [];
+            this.activeNotifications = [];
+            this.maxAlerts = 5;
+            this.maxNotifications = 3;
+            this.soundEnabled = true;
+            this.initializeSounds();
+        }
+
+        initializeSounds() {
+            // Create audio context for notification sounds
+            this.audioContext = null;
+            try {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Audio not supported');
+                this.soundEnabled = false;
+            }
+        }
+
+        playNotificationSound(severity) {
+            if (!this.soundEnabled || !this.audioContext) return;
+
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            // Different sounds for different severity levels
+            switch (severity) {
+                case 'critical':
+                    oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(400, this.audioContext.currentTime + 0.3);
+                    gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.5);
+                    break;
+                case 'high':
+                    oscillator.frequency.setValueAtTime(600, this.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(300, this.audioContext.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.3);
+                    break;
+                case 'medium':
+                    oscillator.frequency.setValueAtTime(500, this.audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.2);
+                    break;
+                case 'low':
+                    oscillator.frequency.setValueAtTime(400, this.audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.15);
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.15);
+                    break;
+            }
+        }
+
+        async createNotification(event) {
+            // Play notification sound
+            this.playNotificationSound(event.severity);
+            
+            // Create notification popup
+            const notification = this.buildNotificationPopup(event);
+            this.addNotificationToDOM(notification);
+            
+            // Also create traditional alert for the alert system
+            const alert = this.buildAlertCard(event);
+            this.addAlertToDOM(alert);
+            
+            this.updateMetrics();
+            
+            // Auto-remove notification after 8 seconds
+            setTimeout(() => {
+                this.removeNotification(event.id);
+            }, 8000);
+            
+            // Auto-remove alert after 30 seconds
+            setTimeout(() => {
+                this.removeAlert(event.id);
+            }, 30000);
+        }
+
+        buildNotificationPopup(event) {
+            const impacts = ['Markets', 'Banking', 'Tech', 'Energy', 'Global'];
+            const selectedImpacts = impacts.slice(0, Math.floor(Math.random() * 3) + 1);
+            
+            const icons = {
+                critical: '🚨',
+                high: '⚠️',
+                medium: '📊',
+                low: '📈'
+            };
+
+            return `
+                <div class="notification-popup ${event.severity}" id="notification-${event.id}">
+                    <button class="notification-close" onclick="alertManager.removeNotification(${event.id})">✕</button>
+                    <div class="notification-header">
+                        <div class="notification-icon ${event.severity}">${icons[event.severity]}</div>
+                        <div class="notification-title-area">
+                            <span class="notification-badge ${event.severity}">${event.severity.toUpperCase()}</span>
+                            <div class="notification-headline">${event.headline}</div>
+                        </div>
+                    </div>
+                    <div class="notification-body">
+                        <div class="notification-description">${event.summary}</div>
+                        <div class="notification-impacts">
+                            ${selectedImpacts.map(impact => `<span class="notification-impact">${impact}</span>`).join('')}
+                        </div>
+                        <div class="notification-actions">
+                            <button class="notification-btn primary" onclick="alertManager.viewDetails(${event.id})">VIEW DETAILS</button>
+                            <button class="notification-btn" onclick="alertManager.dismissNotification(${event.id})">DISMISS</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        addNotificationToDOM(notificationHTML) {
+            // Remove excess notifications
+            const notifications = document.querySelectorAll('.notification-popup');
+            if (notifications.length >= this.maxNotifications) {
+                notifications[notifications.length - 1].remove();
+            }
+            
+            // Add new notification at the top
+            document.body.insertAdjacentHTML('beforeend', notificationHTML);
+            
+            // Position notifications vertically
+            this.repositionNotifications();
+        }
+
+        repositionNotifications() {
+            const notifications = document.querySelectorAll('.notification-popup');
+            notifications.forEach((notification, index) => {
+                notification.style.top = `${20 + (index * 120)}px`;
+            });
+        }
+
+        removeNotification(notificationId) {
+            const notification = document.getElementById(`notification-${notificationId}`);
+            if (notification) {
+                notification.style.animation = 'notificationSlide 0.3s reverse';
+                setTimeout(() => {
+                    notification.remove();
+                    this.repositionNotifications();
+                }, 300);
+            }
+        }
+
+        dismissNotification(notificationId) {
+            this.removeNotification(notificationId);
+        }
+
+        viewDetails(notificationId) {
+            this.removeNotification(notificationId);
+            // Scroll to the event in the news feed
+            const newsFeed = document.getElementById('newsFeed');
+            if (newsFeed) {
+                newsFeed.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        buildAlertCard(event) {
+            const severityClasses = {
+                critical: 'critical severity-critical',
+                high: 'high severity-high',
+                medium: 'medium severity-medium',
+                low: 'low severity-low'
+            };
+
+            const impacts = ['Markets', 'Banking', 'Tech', 'Energy', 'Global'];
+            const selectedImpacts = impacts.slice(0, Math.floor(Math.random() * 3) + 1);
+
+            return `
+                <div class="alert-card ${event.severity}" id="alert-${event.id}">
+                    <button class="alert-close" onclick="alertManager.removeAlert(${event.id})">✕</button>
+                    <div class="alert-header">
+                        <span class="alert-severity ${severityClasses[event.severity]}">${event.severity.toUpperCase()}</span>
+                        <span class="alert-time">just now</span>
+                    </div>
+                    <div class="alert-title">${event.headline}</div>
+                    <div class="alert-description">${event.summary}</div>
+                    <div class="alert-impact">
+                        ${selectedImpacts.map(impact => `<span class="impact-tag">${impact}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        addAlertToDOM(alertHTML) {
+            const alertSystem = document.getElementById('alertSystem');
+            alertSystem.insertAdjacentHTML('afterbegin', alertHTML);
+            
+            // Remove excess alerts
+            const alerts = alertSystem.querySelectorAll('.alert-card');
+            if (alerts.length > this.maxAlerts) {
+                alerts[alerts.length - 1].remove();
+            }
+        }
+
+        removeAlert(alertId) {
+            const alert = document.getElementById(`alert-${alertId}`);
+            if (alert) {
+                alert.style.animation = 'slideInRight 0.3s reverse';
+                setTimeout(() => alert.remove(), 300);
+            }
+        }
+
+        updateMetrics() {
+            const eventsToday = document.getElementById('eventsToday');
+            const currentCount = parseInt(eventsToday.textContent);
+            eventsToday.textContent = currentCount + 1;
+        }
+    }
+
+    // Initialize Systems
+    const detectionEngine = new EventDetectionEngine();
+    const alertManager = new AlertManager();
+
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const cursorRing = document.getElementById('cursorRing');
+
+    document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+        cursorRing.style.left = e.clientX + 'px';
+        cursorRing.style.top = e.clientY + 'px';
+    });
+
+    // Fetch and analyze news
+    async function fetchAndAnalyzeNews() {
+        try {
+            // Try News API first for comprehensive coverage
+            const newsApiResponse = await fetch(`${NEWS_API_BASE_URL}/top-headlines?country=us&category=business&apiKey=${NEWS_API_KEY}`);
+            const newsApiData = await newsApiResponse.json();
+            
+            let allNews = [];
+            
+            // Process News API data
+            if (newsApiData.status === 'ok' && newsApiData.articles) {
+                const newsApiArticles = newsApiData.articles.map(article => ({
+                    headline: article.title,
+                    summary: article.description,
+                    source: article.source.name,
+                    url: article.url,
+                    publishedAt: article.publishedAt,
+                    image: article.urlToImage
+                }));
+                allNews = allNews.concat(newsApiArticles);
+            }
+            
+            // Fallback to Finnhub for additional financial news
+            try {
+                const finnhubResponse = await fetch(`${FINNHUB_BASE_URL}/news?category=general&token=${FINNHUB_API_KEY}`);
+                const finnhubNews = await finnhubResponse.json();
+                
+                if (finnhubNews && finnhubNews.length > 0) {
+                    const finnhubArticles = finnhubNews.map(article => ({
+                        headline: article.headline,
+                        summary: article.summary,
+                        source: article.source,
+                        url: article.url,
+                        publishedAt: new Date(article.datetime * 1000).toISOString()
+                    }));
+                    allNews = allNews.concat(finnhubArticles);
+                }
+            } catch (finnhubError) {
+                console.log('Finnhub news fallback failed:', finnhubError);
+            }
+            
+            // Process all news items
+            if (allNews.length > 0) {
+                for (let i = 0; i < Math.min(5, allNews.length); i++) {
+                    const newsItem = allNews[i];
+                    await analyzeNewsItem(newsItem);
+                }
+                
+                updateNewsFeed(allNews.slice(0, 10));
+            }
+            
+        } catch (error) {
+            console.error('Error fetching news:', error);
+            showError('Failed to fetch news. Please try again later.');
+        }
+    }
+    
+    // Fetch financial news specifically
+    async function fetchFinancialNews() {
+        try {
+            const newsApiResponse = await fetch(`${NEWS_API_BASE_URL}/everything?q=finance OR stocks OR trading OR market&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`);
+            const newsApiData = await newsApiResponse.json();
+            
+            if (newsApiData.status === 'ok' && newsApiData.articles) {
+                return newsApiData.articles.map(article => ({
+                    headline: article.title,
+                    summary: article.description,
+                    source: article.source.name,
+                    url: article.url,
+                    publishedAt: article.publishedAt,
+                    image: article.urlToImage
+                }));
+            }
+            
+            return [];
+        } catch (error) {
+            console.error('Error fetching financial news:', error);
+            return [];
+        }
+    }
+    
+    // Fetch market-specific news
+    async function fetchMarketNews() {
+        try {
+            const newsApiResponse = await fetch(`${NEWS_API_BASE_URL}/everything?q=stock market OR wall street OR nasdaq OR "S&P 500"&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`);
+            const newsApiData = await newsApiResponse.json();
+            
+            if (newsApiData.status === 'ok' && newsApiData.articles) {
+                return newsApiData.articles.map(article => ({
+                    headline: article.title,
+                    summary: article.description,
+                    source: article.source.name,
+                    url: article.url,
+                    publishedAt: article.publishedAt,
+                    image: article.urlToImage
+                }));
+            }
+            
+            return [];
+        } catch (error) {
+            console.error('Error fetching market news:', error);
+            return [];
+        }
+    }
+    
+    // Update news feed UI
+    function updateNewsFeed(articles) {
+        const newsFeed = document.querySelector('.news-feed');
+        if (!newsFeed) return;
+        
+        newsFeed.innerHTML = '';
+        
+        articles.forEach(article => {
+            const newsItem = document.createElement('div');
+            newsItem.className = 'news-item';
+            
+            const timeAgo = getTimeAgo(new Date(article.publishedAt));
+            const sentiment = analyzeSentiment(article.headline + ' ' + (article.summary || ''));
+            
+            newsItem.innerHTML = `
+                <div class="news-sentiment ${sentiment}">${sentiment.toUpperCase()}</div>
+                <div>
+                    <div class="news-headline">${article.headline}</div>
+                    <div class="news-summary">${article.summary || 'No summary available'}</div>
+                    <div class="news-meta">${article.source} • ${timeAgo}</div>
+                </div>
+                ${article.image ? `<img src="${article.image}" alt="${article.headline}" class="news-image" onerror="this.style.display='none'">` : ''}
+            `;
+            
+            newsItem.addEventListener('click', () => {
+                if (article.url) {
+                    window.open(article.url, '_blank');
+                }
+            });
+            
+            newsFeed.appendChild(newsItem);
+        });
+    }
+    
+    // Analyze sentiment of text
+    function analyzeSentiment(text) {
+        const positiveWords = ['gain', 'rise', 'growth', 'profit', 'bullish', 'surge', 'rally', 'up', 'increase', 'strong'];
+        const negativeWords = ['loss', 'fall', 'decline', 'bearish', 'drop', 'crash', 'down', 'decrease', 'weak', 'risk'];
+        
+        const lowerText = text.toLowerCase();
+        let positiveScore = 0;
+        let negativeScore = 0;
+        
+        positiveWords.forEach(word => {
+            if (lowerText.includes(word)) positiveScore++;
+        });
+        
+        negativeWords.forEach(word => {
+            if (lowerText.includes(word)) negativeScore++;
+        });
+        
+        if (positiveScore > negativeScore) return 'bullish';
+        if (negativeScore > positiveScore) return 'bearish';
+        return 'neutral';
+    }
+    
+    // Get time ago string
+    function getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        
+        if (seconds < 60) return 'just now';
+        if (seconds < 3600) return Math.floor(seconds / 60) + ' minutes ago';
+        if (seconds < 86400) return Math.floor(seconds / 3600) + ' hours ago';
+        return Math.floor(seconds / 86400) + ' days ago';
+    }
+    
+    // Show error message
+    function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--red);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-family: var(--mono);
+        `;
+        
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 5000);
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Start news monitoring
+        await fetchAndAnalyzeNews();
+        
+        // Refresh news every 5 minutes
+        setInterval(fetchAndAnalyzeNews, 300000);
+        
+        // Initialize alert system
+        if (typeof alertManager !== 'undefined') {
+            alertManager.startMonitoring();
+        }
+    });
+</script>
+</body>
+</html>

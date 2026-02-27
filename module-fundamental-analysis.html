@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fundamental Analysis - Learning Module | ALPHA</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020b12;
+    --surface: #061520;
+    --border: rgba(0, 220, 130, 0.15);
+    --green: #00dc82;
+    --green-dim: rgba(0, 220, 130, 0.08);
+    --amber: #f5a623;
+    --red: #ff4a6e;
+    --text: #e8f4f0;
+    --muted: rgba(232, 244, 240, 0.45);
+    --mono: 'DM Mono', monospace;
+    --yellow: #FFE600;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 12px; height: 12px; background: var(--green); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: transform 0.15s ease; mix-blend-mode: screen; }
+  .cursor-ring { width: 36px; height: 36px; border: 1px solid rgba(0,220,130,0.4); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); opacity:0.6; pointer-events:none; z-index:1000; }
+
+  /* NAV */
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:24px 60px; background:linear-gradient(to bottom,rgba(2,11,18,0.95),transparent); backdrop-filter:blur(2px); }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:var(--text); display:flex; align-items:center; gap:10px; cursor:none; }
+  .logo-dot { width:8px; height:8px; background:var(--green); border-radius:50%; box-shadow:0 0 16px var(--green); animation:pulse 2s infinite; }
+  .nav-links { display:flex; gap:40px; list-style:none; }
+  .nav-links a { font-size:12px; font-weight:300; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color 0.3s; }
+  .nav-links a:hover { color:var(--green); }
+  .nav-cta { font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:10px 24px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; transition:all 0.3s; }
+  .nav-cta:hover { background:var(--green); color:var(--bg); }
+
+  /* Module Content */
+  .module-container { padding:120px 60px 80px; max-width:1200px; margin:0 auto; }
+  .module-header { margin-bottom:60px; }
+  .module-breadcrumb { font-family:var(--mono); font-size:11px; color:var(--muted); margin-bottom:20px; }
+  .module-breadcrumb a { color:var(--green); text-decoration:none; }
+  .module-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,6vw,80px); letter-spacing:2px; line-height:1; margin-bottom:20px; }
+  .module-subtitle { font-size:16px; font-weight:300; color:var(--muted); line-height:1.8; max-width:600px; }
+  .module-meta { display:flex; gap:30px; margin-top:30px; }
+  .meta-item { display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .meta-icon { font-size:16px; }
+
+  /* Progress Bar */
+  .progress-section { background:var(--surface); border:1px solid var(--border); padding:30px; margin-bottom:40px; border-radius:12px; }
+  .progress-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .progress-title { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; }
+  .progress-percentage { font-family:var(--mono); font-size:18px; color:var(--green); }
+  .progress-bar { height:8px; background:rgba(0,220,130,0.1); border-radius:4px; overflow:hidden; margin-bottom:20px; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--green),var(--amber)); border-radius:4px; transition:width 0.5s ease; }
+  .progress-stats { display:flex; gap:40px; font-family:var(--mono); font-size:12px; color:var(--muted); }
+
+  /* Content Sections */
+  .content-section { background:var(--surface); border:1px solid var(--border); padding:40px; margin-bottom:30px; border-radius:12px; position:relative; }
+  .section-number { position:absolute; top:-15px; left:40px; background:var(--green); color:var(--bg); font-family:'Bebas Neue',sans-serif; font-size:20px; padding:5px 15px; border-radius:20px; }
+  .section-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; margin-bottom:20px; margin-top:10px; }
+  .section-content { font-size:15px; line-height:1.8; color:var(--muted); }
+  .section-content h3 { font-family:'DM Serif Display',serif; font-size:20px; color:var(--text); margin:25px 0 15px; }
+  .section-content p { margin-bottom:15px; }
+  .section-content ul { margin:15px 0 15px 30px; }
+  .section-content li { margin-bottom:8px; }
+  .section-content .highlight { background:var(--green-dim); padding:2px 6px; border-radius:4px; color:var(--green); font-weight:500; }
+  .section-content .key-term { font-family:var(--mono); font-size:14px; background:rgba(245,166,35,0.1); padding:2px 8px; border-radius:4px; color:var(--amber); }
+
+  /* Interactive Elements */
+  .checkpoint-box { background:rgba(0,220,130,0.05); border:1px solid var(--border); padding:20px; margin:30px 0; border-radius:8px; display:flex; align-items:center; gap:20px; }
+  .checkpoint-checkbox { width:24px; height:24px; border:2px solid var(--green); border-radius:6px; cursor:none; display:flex; align-items:center; justify-content:center; transition:all 0.3s; }
+  .checkpoint-checkbox:hover { background:var(--green-dim); }
+  .checkpoint-checkbox.checked { background:var(--green); color:var(--bg); }
+  .checkpoint-content { flex:1; }
+  .checkpoint-title { font-family:var(--mono); font-size:14px; font-weight:600; margin-bottom:5px; }
+  .checkpoint-desc { font-size:12px; color:var(--muted); }
+
+  /* Financial Statements */
+  .statement-box { background:rgba(2,11,18,0.5); border:1px solid var(--border); padding:20px; margin:20px 0; border-radius:8px; }
+  .statement-header { font-family:var(--mono); font-size:14px; font-weight:600; color:var(--green); margin-bottom:15px; }
+  .statement-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(0,220,130,0.1); font-family:var(--mono); font-size:12px; }
+  .statement-row:last-child { border-bottom:none; font-weight:600; color:var(--text); }
+
+  /* Action Buttons */
+  .action-buttons { display:flex; gap:20px; margin-top:40px; }
+  .btn-primary { font-family:var(--mono); font-size:14px; letter-spacing:1px; padding:14px 32px; background:var(--green); color:var(--bg); border:none; cursor:none; font-weight:600; transition:all 0.3s; border-radius:8px; }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,220,130,0.3); }
+  .btn-secondary { font-family:var(--mono); font-size:14px; letter-spacing:1px; padding:14px 32px; background:transparent; border:1px solid var(--green); color:var(--green); cursor:none; font-weight:600; transition:all 0.3s; border-radius:8px; }
+  .btn-secondary:hover { background:var(--green-dim); }
+
+  /* Animations */
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  @keyframes slideIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .content-section { animation:slideIn 0.6s ease forwards; }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="window.location.href='index.html'" style="cursor:none;">
+    <div class="logo-dot"></div>
+    ALPHA
+  </div>
+  <ul class="nav-links">
+    <li><a href="learning-module.html" class="active-nav">Learning Module</a></li>
+    <li><a href="alpha-rush.html">Alpha Rush</a></li>
+    <li><a href="market-analyzer.html">Market Analyzer</a></li>
+    <li><a href="portfolio-analyzer.html">Portfolio Analyzer</a></li>
+    <li><a href="news-intelligence.html">News Intelligence</a></li>
+  </ul>
+  <button class="nav-cta" onclick="window.location.href='learning-module.html'">BACK TO MODULES</button>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="module-container">
+  <div class="module-header">
+    <div class="module-breadcrumb">
+      <a href="learning-module.html">Learning Modules</a> → Fundamental Analysis
+    </div>
+    <h1 class="module-title">FUNDAMENTAL <em>ANALYSIS</em></h1>
+    <p class="module-subtitle">Master the art of evaluating companies through financial statements, economic indicators, and qualitative analysis to determine intrinsic value and make informed investment decisions.</p>
+    <div class="module-meta">
+      <div class="meta-item">
+        <span class="meta-icon">🧮</span>
+        <span>Intermediate Level</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-icon">⏱️</span>
+        <span>55 min read</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-icon">🎯</span>
+        <span>7 Lessons</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Section -->
+  <div class="progress-section">
+    <div class="progress-header">
+      <h3 class="progress-title">YOUR PROGRESS</h3>
+      <span class="progress-percentage" id="progressPercentage">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+    </div>
+    <div class="progress-stats">
+      <span>Completed: <span id="completedCount">0</span>/7 checkpoints</span>
+      <span>Time spent: <span id="timeSpent">0</span> minutes</span>
+      <span>Last accessed: Just now</span>
+    </div>
+  </div>
+
+  <!-- Section 1: Introduction to Fundamental Analysis -->
+  <div class="content-section">
+    <div class="section-number">01</div>
+    <h2 class="section-title">Introduction to Fundamental Analysis</h2>
+    <div class="section-content">
+      <p>Fundamental analysis is a <span class="highlight">method of evaluating a security's intrinsic value by examining related economic, financial, and other qualitative and quantitative factors</span>. Unlike technical analysis, which focuses on price patterns, fundamental analysis seeks to determine what a company is actually worth.</p>
+      
+      <h3>Core Philosophy</h3>
+      <ul>
+        <li><span class="key-term">Intrinsic Value</span> - Every stock has an underlying true value</li>
+        <li><span class="key-term">Market Inefficiency</span> - Price can deviate from intrinsic value</li>
+        <li><span class="key-term">Long-Term Perspective</span> - Focus on business fundamentals over time</li>
+        <li><span class="key-term">Value Investing</span> - Buy undervalued stocks, sell overvalued ones</li>
+      </ul>
+
+      <h3>Fundamental vs Technical Analysis</h3>
+      <ul>
+        <li><span class="highlight">Fundamental</span>: What should the price be? (Business value)</li>
+        <li><span class="highlight">Technical</span>: What is the price doing? (Market psychology)</li>
+      </ul>
+
+      <h3>Key Factors Considered</h3>
+      <ul>
+        <li>Financial statements and ratios</li>
+        <li>Management quality and corporate governance</li>
+        <li>Industry trends and competitive position</li>
+        <li>Economic conditions and market environment</li>
+        <li>Growth prospects and future earnings potential</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 1)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Fundamental Analysis Basics</div>
+          <div class="checkpoint-desc">Can you explain the core philosophy of fundamental analysis?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Financial Statements -->
+  <div class="content-section">
+    <div class="section-number">02</div>
+    <h2 class="section-title">Understanding Financial Statements</h2>
+    <div class="section-content">
+      <p>Financial statements are the foundation of fundamental analysis. They provide a comprehensive view of a company's financial health and performance.</p>
+      
+      <h3>Income Statement</h3>
+      <p>Shows a company's financial performance over a specific period. Also known as the Profit & Loss (P&L) statement.</p>
+      
+      <div class="statement-box">
+        <div class="statement-header">SAMPLE INCOME STATEMENT</div>
+        <div class="statement-row">
+          <span>Revenue</span>
+          <span>$1,000,000</span>
+        </div>
+        <div class="statement-row">
+          <span>Cost of Goods Sold</span>
+          <span>($600,000)</span>
+        </div>
+        <div class="statement-row">
+          <span>Gross Profit</span>
+          <span>$400,000</span>
+        </div>
+        <div class="statement-row">
+          <span>Operating Expenses</span>
+          <span>($200,000)</span>
+        </div>
+        <div class="statement-row">
+          <span>Net Income</span>
+          <span>$200,000</span>
+        </div>
+      </div>
+
+      <h3>Balance Sheet</h3>
+      <p>Provides a snapshot of a company's financial position at a specific point in time. Follows the accounting equation: Assets = Liabilities + Equity.</p>
+      
+      <div class="statement-box">
+        <div class="statement-header">SAMPLE BALANCE SHEET</div>
+        <div class="statement-row">
+          <span>Cash & Equivalents</span>
+          <span>$150,000</span>
+        </div>
+        <div class="statement-row">
+          <span>Accounts Receivable</span>
+          <span>$100,000</span>
+        </div>
+        <div class="statement-row">
+          <span>Total Assets</span>
+          <span>$500,000</span>
+        </div>
+        <div class="statement-row">
+          <span>Total Liabilities</span>
+          <span>$200,000</span>
+        </div>
+        <div class="statement-row">
+          <span>Shareholders' Equity</span>
+          <span>$300,000</span>
+        </div>
+      </div>
+
+      <h3>Cash Flow Statement</h3>
+      <p>Shows how changes in balance sheet accounts and income affect cash and cash equivalents. Breaks cash flow into three categories:</p>
+      <ul>
+        <li><span class="key-term">Operating Activities</span> - Cash from main business operations</li>
+        <li><span class="key-term">Investing Activities</span> - Cash from buying/selling assets</li>
+        <li><span class="key-term">Financing Activities</span> - Cash from debt/equity transactions</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 2)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Financial Statements</div>
+          <div class="checkpoint-desc">Can you explain the purpose of each financial statement?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Financial Ratios -->
+  <div class="content-section">
+    <div class="section-number">03</div>
+    <h2 class="section-title">Financial Ratios and Metrics</h2>
+    <div class="section-content">
+      <p>Financial ratios transform raw financial data into <span class="highlight">meaningful insights about a company's performance, efficiency, and financial health</span>.</p>
+      
+      <h3>Profitability Ratios</h3>
+      <ul>
+        <li><span class="key-term">Gross Profit Margin</span> = (Revenue - COGS) / Revenue</li>
+        <li><span class="key-term">Net Profit Margin</span> = Net Income / Revenue</li>
+        <li><span class="key-term">Return on Assets (ROA)</span> = Net Income / Total Assets</li>
+        <li><span class="key-term">Return on Equity (ROE)</span> = Net Income / Shareholders' Equity</li>
+        <li><span class="key-term">Return on Invested Capital (ROIC)</span> = NOPAT / Invested Capital</li>
+      </ul>
+
+      <h3>Liquidity Ratios</h3>
+      <ul>
+        <li><span class="key-term">Current Ratio</span> = Current Assets / Current Liabilities</li>
+        <li><span class="key-term">Quick Ratio</span> = (Current Assets - Inventory) / Current Liabilities</li>
+        <li><span class="key-term">Cash Ratio</span> = Cash & Cash Equivalents / Current Liabilities</li>
+      </ul>
+
+      <h3>Solvency Ratios</h3>
+      <ul>
+        <li><span class="key-term">Debt-to-Equity Ratio</span> = Total Debt / Shareholders' Equity</li>
+        <li><span class="key-term">Debt-to-Assets Ratio</span> = Total Debt / Total Assets</li>
+        <li><span class="key-term">Interest Coverage Ratio</span> = EBIT / Interest Expense</li>
+      </ul>
+
+      <h3>Efficiency Ratios</h3>
+      <ul>
+        <li><span class="key-term">Asset Turnover</span> = Revenue / Total Assets</li>
+        <li><span class="key-term">Inventory Turnover</span> = COGS / Average Inventory</li>
+        <li><span class="key-term">Days Sales Outstanding</span> = (Accounts Receivable / Revenue) × 365</li>
+      </ul>
+
+      <h3>Valuation Ratios</h3>
+      <ul>
+        <li><span class="highlight">Price-to-Earnings (P/E)</span> = Stock Price / Earnings per Share</li>
+        <li><span class="highlight">Price-to-Book (P/B)</span> = Stock Price / Book Value per Share</li>
+        <li><span class="highlight">Price-to-Sales (P/S)</span> = Stock Price / Sales per Share</li>
+        <li><span class="highlight">EV/EBITDA</span> = Enterprise Value / EBITDA</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 3)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Financial Ratios</div>
+          <div class="checkpoint-desc">Can you categorize ratios by their purpose and interpretation?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Valuation Methods -->
+  <div class="content-section">
+    <div class="section-number">04</div>
+    <h2 class="section-title">Valuation Methods</h2>
+    <div class="section-content">
+      <p>Valuation is the process of determining a company's <span class="highlight">fair value or intrinsic value</span>. Different methods provide different perspectives on what a company is worth.</p>
+      
+      <h3>Discounted Cash Flow (DCF) Analysis</h3>
+      <p>The most comprehensive valuation method based on the principle that a company's value equals the present value of its future cash flows.</p>
+      
+      <h4>DCF Steps:</h4>
+      <ul>
+        <li>1. Project future free cash flows (usually 5-10 years)</li>
+        <li>2. Calculate terminal value (perpetual growth)</li>
+        <li>3. Determine discount rate (WACC)</li>
+        <li>4. Discount all cash flows to present value</li>
+        <li>5. Subtract net debt to get equity value</li>
+      </ul>
+
+      <h3>Comparable Company Analysis</h3>
+      <p>Values a company based on how similar companies are priced in the market.</p>
+      <ul>
+        <li><span class="key-term">Select Comparable Companies</span> - Similar size, industry, growth</li>
+        <li><span class="key-term">Calculate Multiples</span> - P/E, EV/EBITDA, P/S, etc.</li>
+        <li><span class="key-term">Apply Multiples</span> - To target company's metrics</li>
+        <li><span class="key-term">Range of Values</span> - Consider multiple scenarios</li>
+      </ul>
+
+      <h3>Precedent Transactions Analysis</h3>
+      <p>Values a company based on prices paid for similar companies in past acquisitions.</p>
+      <ul>
+        <li><span class="highlight">Control Premium</span> - Buyers typically pay 20-40% above market price</li>
+        <li><span class="highlight">Synergies</span> - Strategic value to the acquirer</li>
+        <li><span class="highlight">Market Conditions</span> - Economic environment affects valuations</li>
+      </ul>
+
+      <h3>Asset-Based Valuation</h3>
+      <p>Values a company based on the value of its assets, minus liabilities.</p>
+      <ul>
+        <li><span class="key-term">Book Value</span> - Historical cost of assets</li>
+        <li><span class="key-term">Liquidation Value</span> - Value if assets sold quickly</li>
+        <li><span class="key-term">Replacement Cost</span> - Cost to replace assets</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 4)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Valuation Methods</div>
+          <div class="checkpoint-desc">Can you explain the difference between DCF and comparable analysis?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 5: Economic Analysis -->
+  <div class="content-section">
+    <div class="section-number">05</div>
+    <h2 class="section-title">Economic and Industry Analysis</h2>
+    <div class="section-content">
+      <p>Company analysis must be placed in the context of the broader economy and industry. <span class="highlight">Even great companies can struggle in poor economic conditions</span>.</p>
+      
+      <h3>Macroeconomic Factors</h3>
+      <ul>
+        <li><span class="key-term">GDP Growth</span> - Economic expansion drives corporate earnings</li>
+        <li><span class="key-term">Interest Rates</span> - Affect borrowing costs and investment returns</li>
+        <li><span class="key-term">Inflation</span> - Impacts costs, pricing power, and real returns</li>
+        <li><span class="key-term">Employment</span> - Consumer spending and business confidence</li>
+        <li><span class="key-term">Consumer Confidence</span> - Predicts future spending patterns</li>
+      </ul>
+
+      <h3>Industry Analysis Framework</h3>
+      
+      <h4>Porter's Five Forces</h4>
+      <ul>
+        <li><span class="highlight">Threat of New Entrants</span> - Barriers to entry, economies of scale</li>
+        <li><span class="highlight">Bargaining Power of Buyers</span> - Customer concentration, price sensitivity</li>
+        <li><span class="highlight">Bargaining Power of Suppliers</span> - Supplier concentration, switching costs</li>
+        <li><span class="highlight">Threat of Substitutes</span> - Alternative products/services</li>
+        <li><span class="highlight">Competitive Rivalry</span> - Industry concentration, growth rates</li>
+      </ul>
+
+      <h3>Industry Life Cycle</h3>
+      <ul>
+        <li><span class="key-term">Introduction</span> - High risk, high growth potential</li>
+        <li><span class="key-term">Growth</span> - Rapid expansion, increasing competition</li>
+        <li><span class="key-term">Maturity</span> - Slower growth, stable profits</li>
+        <li><span class="key-term">Decline</span> - Falling demand, consolidation</li>
+      </ul>
+
+      <h3>Key Industry Metrics</h3>
+      <ul>
+        <li><span class="highlight">Market Size and Growth Rate</span> - Total addressable market</li>
+        <li><span class="highlight">Profit Margins</span> - Industry average profitability</li>
+        <li><span class="highlight">Capital Intensity</span> - Investment requirements</li>
+        <li><span class="highlight">Cyclicality</span> - Sensitivity to economic cycles</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 5)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Economic Analysis</div>
+          <div class="checkpoint-desc">Can you explain Porter's Five Forces framework?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 6: Quality Assessment -->
+  <div class="content-section">
+    <div class="section-number">06</div>
+    <h2 class="section-title">Quality Assessment</h2>
+    <div class="section-content">
+      <p>Beyond numbers, assessing the <span class="highlight">qualitative aspects of a business</span> is crucial for long-term investment success.</p>
+      
+      <h3>Management Quality</h3>
+      <ul>
+        <li><span class="key-term">Leadership Experience</span> - Track record and industry expertise</li>
+        <li><span class="key-term">Capital Allocation</span> - How management uses company capital</li>
+        <li><span class="key-term">Transparency</span> - Clear communication with shareholders</li>
+        <li><span class="key-term">Compensation Structure</span> - Alignment with shareholder interests</li>
+        <li><span class="key-term">Corporate Governance</span> - Board independence and oversight</li>
+      </ul>
+
+      <h3>Competitive Advantages (Moats)</h3>
+      <p>Durable competitive advantages protect profits from competition:</p>
+      <ul>
+        <li><span class="highlight">Brand Power</span> - Strong customer loyalty and pricing power</li>
+        <li><span class="highlight">Network Effects</span> - Value increases with more users</li>
+        <li><span class="highlight">Switching Costs</span> - Difficult or expensive for customers to leave</li>
+        <li><span class="highlight">Cost Advantages</span> - Lower production or distribution costs</li>
+        <li><span class="highlight">Regulatory Barriers</span> - Licenses, patents, or regulatory approval</li>
+      </ul>
+
+      <h3>Business Model Analysis</h3>
+      <ul>
+        <li><span class="key-term">Revenue Streams</span> - How the company makes money</li>
+        <li><span class="key-term">Customer Base</span> - Concentration and loyalty</li>
+        <li><span class="key-term">Pricing Power</span> - Ability to raise prices without losing customers</li>
+        <li><span class="key-term">Scalability</span> - Ability to grow without proportional cost increases</li>
+      </ul>
+
+      <h3>Risk Factors</h3>
+      <ul>
+        <li><span class="highlight">Business Risks</span> - Competition, technology changes, regulation</li>
+        <li><span class="highlight">Financial Risks</span> - Debt levels, liquidity, currency exposure</li>
+        <li><span class="highlight">Operational Risks</span> - Supply chain, key person dependencies</li>
+        <li><span class="highlight">Legal Risks</span> - Lawsuits, regulatory actions</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 6)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Quality Assessment</div>
+          <div class="checkpoint-desc">Can you identify different types of competitive advantages?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 7: Integration and Decision Making -->
+  <div class="content-section">
+    <div class="section-number">07</div>
+    <h2 class="section-title">Integration and Investment Decision</h2>
+    <div class="section-content">
+      <p>Fundamental analysis culminates in making <span class="highlight">informed investment decisions</span> by integrating all analysis components into a cohesive investment thesis.</p>
+      
+      <h3>Building an Investment Thesis</h3>
+      <ul>
+        <li><span class="key-term">Business Understanding</span> - What the company does and why it matters</li>
+        <li><span class="key-term">Financial Health</span> - Strong balance sheet and cash flow generation</li>
+        <li><span class="key-term">Growth Catalysts</span> - Drivers of future growth</li>
+        <li><span class="key-term">Valuation</span> - Attractive price relative to intrinsic value</li>
+        <li><span class="key-term">Risk Assessment</span> - Potential downsides and mitigation</li>
+      </ul>
+
+      <h3>Margin of Safety</h3>
+      <p>Benjamin Graham's concept of buying at a discount to intrinsic value:</p>
+      <ul>
+        <li><span class="highlight">Purpose</span> - Protection against analysis errors and bad luck</li>
+        <li><span class="highlight">Typical Range</span> - 20-50% below estimated intrinsic value</li>
+        <li><span class="highlight">Higher Risk</span> - Requires larger margin of safety</li>
+        <li><span class="highlight">Lower Risk</span> - Can accept smaller margin of safety</li>
+      </ul>
+
+      <h3>Investment Checklist</h3>
+      <p>A systematic approach to ensure thorough analysis:</p>
+      <ul>
+        <li>☐ Understand the business model completely</li>
+        <li>☐ Analyze financial statements for 5+ years</li>
+        <li>☐ Calculate and interpret key ratios</li>
+        <li>☐ Assess management quality and governance</li>
+        <li>☐ Evaluate competitive position and moats</li>
+        <li>☐ Conduct industry and economic analysis</li>
+        <li>☐ Perform valuation using multiple methods</li>
+        <li>☐ Identify key risks and catalysts</li>
+        <li>☐ Determine appropriate margin of safety</li>
+        <li>☐ Set price targets and exit criteria</li>
+      </ul>
+
+      <h3>Common Pitfalls to Avoid</h3>
+      <ul>
+        <li><span class="key-term">Confirmation Bias</span> - Only seeking information that supports your thesis</li>
+        <li><span class="key-term">Overconfidence</span> - Believing your analysis is infallible</li>
+        <li><span class="key-term">Anchoring</span> - Being influenced by irrelevant reference points</li>
+        <li><span class="key-term">Herding</span> - Following popular opinion without independent analysis</li>
+        <li><span class="key-term">Short-term Focus</span> - Ignoring long-term fundamentals for short-term gains</li>
+      </ul>
+
+      <h3>Continuous Monitoring</h3>
+      <p>Fundamental analysis is not a one-time event:</p>
+      <ul>
+        <li><span class="highlight">Quarterly Earnings</span> - Review financial performance</li>
+        <li><span class="highlight">Industry Trends</span> - Monitor competitive landscape</li>
+        <li><span class="highlight">Management Changes</span> - Assess impact on strategy</li>
+        <li><span class="highlight">Valuation Updates</span> - Adjust targets as conditions change</li>
+      </ul>
+
+      <div class="checkpoint-box">
+        <div class="checkpoint-checkbox" onclick="toggleCheckpoint(this, 7)">
+          <span class="checkmark" style="display:none;">✓</span>
+        </div>
+        <div class="checkpoint-content">
+          <div class="checkpoint-title">Checkpoint: Investment Decision</div>
+          <div class="checkpoint-desc">Can you explain the concept of margin of safety?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button class="btn-primary" onclick="completeModule()">MARK AS COMPLETE</button>
+    <button class="btn-secondary" onclick="window.location.href='learning-module.html'">BACK TO MODULES</button>
+  </div>
+</div>
+
+<script>
+    // Module progress tracking
+    let moduleProgress = {
+        checkpoints: [false, false, false, false, false, false, false],
+        startTime: Date.now(),
+        completed: false
+    };
+
+    // Load saved progress
+    function loadProgress() {
+        const saved = localStorage.getItem('fundamental-analysis_progress');
+        if (saved) {
+            moduleProgress = JSON.parse(saved);
+            updateUI();
+        }
+        updateTimeSpent();
+    }
+
+    // Save progress
+    function saveProgress() {
+        localStorage.setItem('fundamental-analysis_progress', JSON.stringify(moduleProgress));
+        updateLearningModuleDashboard();
+    }
+
+    // Toggle checkpoint
+    function toggleCheckpoint(element, checkpointIndex) {
+        const isChecked = element.classList.contains('checked');
+        
+        if (isChecked) {
+            element.classList.remove('checked');
+            element.querySelector('.checkmark').style.display = 'none';
+            moduleProgress.checkpoints[checkpointIndex - 1] = false;
+        } else {
+            element.classList.add('checked');
+            element.querySelector('.checkmark').style.display = 'block';
+            moduleProgress.checkpoints[checkpointIndex - 1] = true;
+            
+            // Visual feedback
+            element.style.animation = 'pulse 0.5s ease';
+            setTimeout(() => {
+                element.style.animation = '';
+            }, 500);
+        }
+        
+        updateProgress();
+        saveProgress();
+    }
+
+    // Update progress bar
+    function updateProgress() {
+        const completedCount = moduleProgress.checkpoints.filter(c => c).length;
+        const totalCount = moduleProgress.checkpoints.length;
+        const percentage = Math.round((completedCount / totalCount) * 100);
+        
+        document.getElementById('progressFill').style.width = percentage + '%';
+        document.getElementById('progressPercentage').textContent = percentage + '%';
+        document.getElementById('completedCount').textContent = completedCount;
+    }
+
+    // Update time spent
+    function updateTimeSpent() {
+        setInterval(() => {
+            const minutes = Math.floor((Date.now() - moduleProgress.startTime) / 60000);
+            document.getElementById('timeSpent').textContent = minutes;
+        }, 60000);
+    }
+
+    // Complete module
+    function completeModule() {
+        const completedCount = moduleProgress.checkpoints.filter(c => c).length;
+        
+        if (completedCount < 7) {
+            alert('Please complete all checkpoints before marking the module as complete.');
+            return;
+        }
+        
+        moduleProgress.completed = true;
+        moduleProgress.completionTime = Date.now();
+        saveProgress();
+        
+        // Show success message
+        const button = event.target;
+        button.textContent = '✓ MODULE COMPLETED';
+        button.style.background = 'var(--amber)';
+        button.style.color = 'var(--bg)';
+        
+        // Update dashboard
+        updateLearningModuleDashboard();
+        
+        // Redirect after delay
+        setTimeout(() => {
+            window.location.href = 'learning-module.html';
+        }, 2000);
+    }
+
+    // Update learning module dashboard
+    function updateLearningModuleDashboard() {
+        // Update dashboard data
+        let dashboardData = JSON.parse(localStorage.getItem('learningModule_progress') || '{}');
+        
+        dashboardData['fundamental-analysis'] = {
+            completed: moduleProgress.completed,
+            progress: moduleProgress.checkpoints.filter(c => c).length,
+            timeSpent: Math.floor((Date.now() - moduleProgress.startTime) / 60000),
+            lastAccessed: new Date().toISOString()
+        };
+        
+        localStorage.setItem('learningModule_progress', JSON.stringify(dashboardData));
+    }
+
+    // Update UI based on saved progress
+    function updateUI() {
+        // Update checkpoints
+        moduleProgress.checkpoints.forEach((completed, index) => {
+            if (completed) {
+                const checkbox = document.querySelectorAll('.checkpoint-checkbox')[index];
+                if (checkbox) {
+                    checkbox.classList.add('checked');
+                    checkbox.querySelector('.checkmark').style.display = 'block';
+                }
+            }
+        });
+        
+        // Update progress
+        updateProgress();
+        
+        // Show completion status
+        if (moduleProgress.completed) {
+            const button = document.querySelector('.btn-primary');
+            button.textContent = '✓ MODULE COMPLETED';
+            button.style.background = 'var(--amber)';
+            button.style.color = 'var(--bg)';
+        }
+    }
+
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const cursorRing = document.getElementById('cursorRing');
+
+    document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+        cursorRing.style.left = e.clientX + 'px';
+        cursorRing.style.top = e.clientY + 'px';
+    });
+
+    document.addEventListener('mousedown', () => {
+        cursor.style.transform = 'scale(0.8)';
+        cursorRing.style.transform = 'scale(0.8)';
+    });
+
+    document.addEventListener('mouseup', () => {
+        cursor.style.transform = 'scale(1)';
+        cursorRing.style.transform = 'scale(1)';
+    });
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProgress();
+    });
+</script>
+
+</body>
+</html>

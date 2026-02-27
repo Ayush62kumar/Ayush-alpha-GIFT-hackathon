@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OHLCV Chart Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #020b12; color: #e8f4f0; }
+        .test { margin: 10px 0; padding: 10px; background: #061520; border-radius: 8px; }
+        .success { border-left: 4px solid #00dc82; }
+        .error { border-left: 4px solid #ff4a6e; }
+        button { background: #00dc82; color: #020b12; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .chart-container { background: #061520; border: 1px solid #00dc82; border-radius: 8px; height: 500px; margin: 20px 0; display: flex; flex-direction: column; position: relative; }
+        .chart-main { flex: 1; position: relative; }
+        .chart-volume { height: 100px; border-top: 1px solid #00dc82; position: relative; }
+        .chart-legend { position: absolute; top: 10px; left: 10px; font-size: 10px; color: #888; z-index: 10; }
+        .price-info { position: absolute; top: 10px; right: 60px; font-size: 12px; color: #e8f4f0; z-index: 10; text-align: right; }
+        .current-price { font-size: 16px; font-weight: bold; }
+        .price-up { color: #00dc82; }
+        .price-down { color: #ff4a6e; }
+        .chart-status { position: absolute; top: 10px; right: 10px; font-size: 10px; color: #00dc82; z-index: 10; }
+        .status-dot { width: 4px; height: 4px; background: #00dc82; border-radius: 50%; display: inline-block; margin-right: 5px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        canvas { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <h1>OHLCV Chart Test</h1>
+    <div id="results"></div>
+    
+    <button onclick="testChart('AAPL', '1D')">Test AAPL 1D</button>
+    <button onclick="testChart('AAPL', '1M')">Test AAPL 1M</button>
+    <button onclick="testChart('TSLA', '1M')">Test TSLA 1M</button>
+    <button onclick="testChart('GOOGL', '1Y')">Test GOOGL 1Y</button>
+    <button onclick="stopRealTime()">Stop Real-time</button>
+    <button onclick="startRealTime()">Start Real-time</button>
+    
+    <div class="chart-container">
+        <div class="chart-status">
+            <div class="status-dot"></div>
+            LIVE DATA
+        </div>
+        <div class="chart-legend">
+            <div style="color:#00dc82;">● O</div>
+            <div style="color:#ff4a6e;">● H</div>
+            <div style="color:#f5a623;">● L</div>
+            <div style="color:#e8f4f0;">● C</div>
+        </div>
+        <div class="price-info" id="priceInfo">
+            <div class="current-price" id="currentPrice">$0.00</div>
+            <div class="price-change" id="priceChange">+0.00 (0.00%)</div>
+        </div>
+        <div class="chart-main">
+            <canvas id="priceChart"></canvas>
+        </div>
+        <div class="chart-volume">
+            <canvas id="volumeChart"></canvas>
+        </div>
+    </div>
+    
+    <script>
+        const FINNHUB_API_KEY = 'd6g83gpr01qt4931t7ogd6g83gpr01qt4931t7p0';
+        const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
+        
+        const results = document.getElementById('results');
+        let currentSymbol = 'AAPL';
+        let currentTimeframe = '1M';
+        let realTimeInterval = null;
+        let ohlcData = [];
+        
+        function addResult(message, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        async function getStockQuote(symbol) {
+            try {
+                const response = await fetch(`${FINNHUB_BASE_URL}/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error(`Error fetching ${symbol}:`, error);
+                return null;
+            }
+        }
+        
+        function updatePriceDisplay(quoteData) {
+            const currentPriceEl = document.getElementById('currentPrice');
+            const priceChangeEl = document.getElementById('priceChange');
+            
+            const currentPrice = quoteData.c;
+            const change = quoteData.d || 0;
+            const changePercent = quoteData.dp || 0;
+            
+            currentPriceEl.textContent = `$${currentPrice.toFixed(2)}`;
+            
+            const changeText = `${change >= 0 ? '+' : ''}${change.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)`;
+            priceChangeEl.textContent = changeText;
+            
+            priceChangeEl.className = `price-change ${change >= 0 ? 'price-up' : 'price-down'}`;
+            currentPriceEl.style.color = change >= 0 ? '#00dc82' : '#ff4a6e';
+        }
+        
+        function addRealTimeCandle(quoteData) {
+            const now = new Date();
+            const timestamp = Math.floor(now.getTime() / 60000) * 60000;
+            
+            let existingCandle = ohlcData.find(c => c.timestamp === timestamp);
+            
+            if (existingCandle) {
+                existingCandle.close = quoteData.c;
+                existingCandle.high = Math.max(existingCandle.high, quoteData.c);
+                existingCandle.low = Math.min(existingCandle.low, quoteData.c);
+                existingCandle.volume = (existingCandle.volume || 0) + (quoteData.volume || 1000000);
+            } else {
+                const newCandle = {
+                    timestamp: timestamp,
+                    open: quoteData.c,
+                    high: quoteData.c,
+                    low: quoteData.c,
+                    close: quoteData.c,
+                    volume: quoteData.volume || Math.floor(Math.random() * 10000000) + 1000000
+                };
+                
+                ohlcData.push(newCandle);
+                
+                if (ohlcData.length > 100) {
+                    ohlcData.shift();
+                }
+            }
+        }
+        
+        function drawOHLCChart() {
+            const canvas = document.getElementById('priceChart');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width = canvas.offsetWidth;
+            const height = canvas.height = canvas.offsetHeight;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            if (ohlcData.length === 0) return;
+            
+            const padding = 40;
+            const chartWidth = width - (padding * 2);
+            const chartHeight = height - (padding * 2);
+            
+            const allHighs = ohlcData.map(d => d.high);
+            const allLows = ohlcData.map(d => d.low);
+            const maxPrice = Math.max(...allHighs);
+            const minPrice = Math.min(...allLows);
+            const priceRange = maxPrice - minPrice || 1;
+            
+            // Draw grid
+            ctx.strokeStyle = 'rgba(0, 220, 130, 0.1)';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (chartHeight / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(padding + chartWidth, y);
+                ctx.stroke();
+                
+                const price = maxPrice - (maxPrice - minPrice) * (i / 5);
+                ctx.fillStyle = '#888';
+                ctx.font = '9px monospace';
+                ctx.textAlign = 'right';
+                ctx.fillText(`$${price.toFixed(2)}`, padding - 5, y + 3);
+            }
+            
+            // Draw OHLC candles
+            const candleWidth = Math.max(2, chartWidth / ohlcData.length - 2);
+            
+            ohlcData.forEach((candle, i) => {
+                const x = padding + (chartWidth / (ohlcData.length - 1)) * i;
+                
+                const yOpen = padding + ((maxPrice - candle.open) / priceRange) * chartHeight;
+                const yHigh = padding + ((maxPrice - candle.high) / priceRange) * chartHeight;
+                const yLow = padding + ((maxPrice - candle.low) / priceRange) * chartHeight;
+                const yClose = padding + ((maxPrice - candle.close) / priceRange) * chartHeight;
+                
+                const isGreen = candle.close >= candle.open;
+                const color = isGreen ? '#00dc82' : '#ff4a6e';
+                
+                // Draw high-low line
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x, yHigh);
+                ctx.lineTo(x, yLow);
+                ctx.stroke();
+                
+                // Draw open-close box
+                ctx.fillStyle = color;
+                const boxHeight = Math.abs(yClose - yOpen) || 1;
+                const boxY = Math.min(yOpen, yClose);
+                
+                if (isGreen) {
+                    ctx.strokeRect(x - candleWidth/2, boxY, candleWidth, boxHeight);
+                } else {
+                    ctx.fillRect(x - candleWidth/2, boxY, candleWidth, boxHeight);
+                }
+                
+                // Current price indicator
+                if (i === ohlcData.length - 1) {
+                    ctx.fillStyle = '#00dc82';
+                    ctx.beginPath();
+                    ctx.arc(x, yClose, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#00dc82';
+                    ctx.font = 'bold 10px monospace';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`$${candle.close.toFixed(2)}`, x + 5, yClose + 3);
+                }
+            });
+        }
+        
+        function drawVolumeChart() {
+            const canvas = document.getElementById('volumeChart');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width = canvas.offsetWidth;
+            const height = canvas.height = canvas.offsetHeight;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            if (ohlcData.length === 0) return;
+            
+            const padding = 10;
+            const chartWidth = width - (padding * 2);
+            const chartHeight = height - (padding * 2);
+            
+            const volumes = ohlcData.map(d => d.volume || 0);
+            const maxVolume = Math.max(...volumes);
+            
+            const barWidth = Math.max(2, chartWidth / ohlcData.length - 2);
+            
+            ohlcData.forEach((candle, i) => {
+                const x = padding + (chartWidth / (ohlcData.length - 1)) * i;
+                const volume = candle.volume || 0;
+                const barHeight = (volume / maxVolume) * chartHeight;
+                const y = height - padding - barHeight;
+                
+                const isGreen = candle.close >= candle.open;
+                ctx.fillStyle = isGreen ? 'rgba(0, 220, 130, 0.6)' : 'rgba(255, 74, 110, 0.6)';
+                
+                ctx.fillRect(x - barWidth/2, y, barWidth, barHeight);
+            });
+            
+            ctx.fillStyle = '#888';
+            ctx.font = '9px monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText('VOL', padding, padding - 2);
+        }
+        
+        async function updateRealTimeData() {
+            try {
+                const quoteData = await getStockQuote(currentSymbol);
+                
+                if (quoteData && quoteData.c) {
+                    updatePriceDisplay(quoteData);
+                    addRealTimeCandle(quoteData);
+                    drawOHLCChart();
+                    drawVolumeChart();
+                }
+            } catch (error) {
+                console.error('Real-time update error:', error);
+            }
+        }
+        
+        function startRealTimeUpdates() {
+            if (realTimeInterval) return;
+            
+            realTimeInterval = setInterval(async () => {
+                await updateRealTimeData();
+            }, 5000);
+            
+            updateRealTimeData();
+        }
+        
+        function stopRealTimeUpdates() {
+            if (realTimeInterval) {
+                clearInterval(realTimeInterval);
+                realTimeInterval = null;
+            }
+        }
+        
+        async function generateHistoricalData(symbol, timeframe) {
+            const quoteData = await getStockQuote(symbol);
+            if (!quoteData || !quoteData.c) return;
+            
+            const currentPrice = quoteData.c;
+            let dataPoints = 50;
+            
+            switch(timeframe) {
+                case '1D': dataPoints = 78; break;
+                case '1W': dataPoints = 7 * 24; break;
+                case '1M': dataPoints = 30; break;
+                case '3M': dataPoints = 90; break;
+                case '1Y': dataPoints = 52; break;
+            }
+            
+            const now = new Date();
+            const timeInterval = getTimeInterval(timeframe);
+            
+            let basePrice = currentPrice * 0.85;
+            
+            for (let i = 0; i < dataPoints; i++) {
+                const timestamp = now.getTime() - (dataPoints - i) * timeInterval;
+                
+                const trend = (i / dataPoints) * 0.20;
+                const volatility = 0.02;
+                const randomWalk = (Math.random() - 0.5) * 2 * volatility;
+                const priceChange = trend + randomWalk;
+                
+                const dayOpen = basePrice * (1 + priceChange);
+                const dayClose = dayOpen * (1 + (Math.random() - 0.45) * volatility);
+                const dayHigh = Math.max(dayOpen, dayClose) * (1 + Math.random() * volatility * 0.5);
+                const dayLow = Math.min(dayOpen, dayClose) * (1 - Math.random() * volatility * 0.5);
+                
+                const candle = {
+                    timestamp: Math.floor(timestamp / 60000) * 60000,
+                    open: dayOpen,
+                    high: dayHigh,
+                    low: dayLow,
+                    close: dayClose,
+                    volume: Math.floor(Math.random() * 10000000) + 1000000
+                };
+                
+                ohlcData.push(candle);
+                basePrice = dayClose;
+            }
+            
+            if (ohlcData.length > 0) {
+                const lastCandle = ohlcData[ohlcData.length - 1];
+                lastCandle.close = currentPrice;
+                lastCandle.high = Math.max(lastCandle.high, currentPrice);
+                lastCandle.low = Math.min(lastCandle.low, currentPrice);
+            }
+        }
+        
+        function getTimeInterval(timeframe) {
+            switch(timeframe) {
+                case '1D': return 5 * 60 * 1000;
+                case '1W': return 60 * 60 * 1000;
+                case '1M': return 24 * 60 * 60 * 1000;
+                case '3M': return 24 * 60 * 60 * 1000;
+                case '1Y': return 7 * 24 * 60 * 60 * 1000;
+                default: return 24 * 60 * 60 * 1000;
+            }
+        }
+        
+        async function testChart(symbol, timeframe) {
+            try {
+                addResult(`🔄 Loading ${symbol} ${timeframe} OHLCV chart...`, 'success');
+                
+                stopRealTimeUpdates();
+                
+                ohlcData = [];
+                currentSymbol = symbol;
+                currentTimeframe = timeframe;
+                
+                await generateHistoricalData(symbol, timeframe);
+                drawOHLCChart();
+                drawVolumeChart();
+                startRealTimeUpdates();
+                
+                addResult(`✅ ${symbol} ${timeframe} chart loaded successfully`, 'success');
+                
+            } catch (error) {
+                addResult(`❌ Chart test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function stopRealTime() {
+            stopRealTimeUpdates();
+            addResult('⏸️ Real-time updates stopped', 'success');
+        }
+        
+        function startRealTime() {
+            startRealTimeUpdates();
+            addResult('▶️ Real-time updates started', 'success');
+        }
+        
+        // Auto-test on load
+        window.onload = () => {
+            addResult('🚀 OHLCV Chart Test Page Loaded', 'success');
+            testChart('AAPL', '1M');
+        };
+    </script>
+</body>
+</html>
